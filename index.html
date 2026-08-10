@@ -868,15 +868,27 @@ Select Problem + Branch + Month.
 DATABASE
 ===================================================== */
 
-let db =
-JSON.parse(
-Firebase Realtime Database.getItem("maintenanceDB")
-) || {
+import {
+    getDatabase,
+    ref,
+    get,
+    set
+} from "firebase/database";
 
-    issues:[],
-    tasks:[]
+const database = getDatabase(app);
 
-};
+const dbRef = ref(database, "maintenanceDB");
+
+const snapshot = await get(dbRef);
+
+let db = snapshot.exists()
+    ? snapshot.val()
+    : {
+        issues: [],
+        tasks: []
+    };
+
+وللحفظ:
 
 
 /*
