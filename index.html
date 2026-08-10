@@ -1,231 +1,907 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maintenance Management System</title>
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+<style>
+*{box-sizing:border-box}
 
-import {
-    getDatabase,
-    ref,
-    get,
-    set,
-    push,
-    update,
-    remove,
-    onValue
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f3f4f6;
+    color:#1f2937
 }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+header{
+    background:#111827;
+    color:#fff;
+    padding:18px 28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center
+}
+
+header h1{margin:0;font-size:23px}
+
+.container{
+    max-width:1450px;
+    margin:auto;
+    padding:25px
+}
+
+nav{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:20px
+}
+
+button{
+    border:0;
+    padding:9px 14px;
+    border-radius:7px;
+    cursor:pointer;
+    background:#2563eb;
+    color:#fff;
+    font-weight:bold
+}
+
+button:hover{opacity:.9}
+button.secondary{background:#6b7280}
+button.success{background:#16a34a}
+button.danger{background:#dc2626}
+button.warning{background:#d97706}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:15px;
+    margin-bottom:20px
+}
+
+.card{
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06)
+}
+
+.card h3{
+    margin:0 0 10px;
+    color:#6b7280;
+    font-size:14px
+}
+
+.card strong{
+    font-size:27px
+}
+
+.section{
+    background:#fff;
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06)
+}
+
+.section h2{margin-top:0}
+
+.hidden{display:none}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+    gap:6px
+}
+
+.full{grid-column:1/-1}
+
+label{
+    font-size:13px;
+    font-weight:bold
+}
+
+input,select,textarea{
+    width:100%;
+    padding:10px;
+    border:1px solid #d1d5db;
+    border-radius:7px;
+    font-size:14px
+}
+
+textarea{
+    min-height:100px;
+    resize:vertical
+}
+
+.actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:18px
+}
+
+.filters{
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr;
+    gap:10px;
+    margin-bottom:15px
+}
+
+table{
+    width:100%;
+    border-collapse:collapse
+}
+
+th,td{
+    padding:11px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:left;
+    font-size:13px
+}
+
+th{background:#f9fafb}
+
+.status{
+    padding:5px 9px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:bold
+}
+
+.status.Open{
+    background:#fee2e2;
+    color:#991b1b
+}
+
+.status.InProgress{
+    background:#fef3c7;
+    color:#92400e
+}
+
+.status.Closed{
+    background:#dcfce7;
+    color:#166534
+}
+
+.priority{
+    padding:5px 9px;
+    border-radius:20px;
+    font-size:11px
+}
+
+.priority.High{
+    background:#fee2e2;
+    color:#991b1b
+}
+
+.priority.Medium{
+    background:#fef3c7;
+    color:#92400e
+}
+
+.priority.Low{
+    background:#dcfce7;
+    color:#166534
+}
+
+.week-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:15px
+}
+
+.week-grid{
+    display:grid;
+    grid-template-columns:repeat(7,minmax(180px,1fr));
+    gap:10px;
+    overflow-x:auto
+}
+
+.day-column{
+    min-height:350px;
+    background:#f9fafb;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    padding:10px
+}
+
+.day-column.today{
+    border:2px solid #2563eb;
+    background:#eff6ff
+}
+
+.day-title{
+    border-bottom:1px solid #ddd;
+    padding-bottom:9px;
+    margin-bottom:10px
+}
+
+.task-card{
+    background:#fff;
+    border:1px solid #ddd;
+    border-radius:8px;
+    padding:10px;
+    margin-bottom:9px
+}
+
+.task-card.done{
+    opacity:.65;
+    background:#ecfdf5
+}
+
+.task-card.cancelled{
+    opacity:.5;
+    background:#fef2f2
+}
+
+.badge{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:15px;
+    background:#eef2ff;
+    color:#3730a3;
+    font-size:11px;
+    margin:2px
+}
+
+.today-box{
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:18px
+}
+
+.history-item{
+    border-left:3px solid #2563eb;
+    background:#f9fafb;
+    padding:14px;
+    margin:10px 0;
+    border-radius:7px
+}
+
+.report-summary{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin:20px 0
+}
+
+.report-box{
+    background:#f9fafb;
+    padding:18px;
+    border-radius:10px
+}
+
+.report-box strong{
+    display:block;
+    font-size:23px;
+    margin-top:7px
+}
+
+@media(max-width:950px){
+    .cards,.report-summary{
+        grid-template-columns:repeat(2,1fr)
+    }
+
+    .form-grid,.filters{
+        grid-template-columns:1fr
+    }
+}
+
+@media(max-width:600px){
+    .cards,.report-summary{
+        grid-template-columns:1fr
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Maintenance Management System</h1>
+    <span id="todayLabel"></span>
+</header>
+
+<div class="container">
+
+<!-- DASHBOARD -->
+
+<div class="cards">
+
+    <div class="card">
+        <h3>Open Issues</h3>
+        <strong id="dOpen">0</strong>
+    </div>
+
+    <div class="card">
+        <h3>In Progress</h3>
+        <strong id="dProgress">0</strong>
+    </div>
+
+    <div class="card">
+        <h3>Closed This Month</h3>
+        <strong id="dClosed">0</strong>
+    </div>
+
+    <div class="card">
+        <h3>Monthly Cost</h3>
+        <strong id="dCost">0 EGP</strong>
+    </div>
+
+</div>
 
 
-/* =====================================================
-FIREBASE
-===================================================== */
+<!-- NAV -->
 
-const firebaseConfig = {
+<nav>
 
-    apiKey:
-        "AIzaSyBRhXWb3fk_a7-w2TZVAe4xAFkTMtjZla8",
+<button onclick="showSection('maintenance')">
+Maintenance
+</button>
 
-    authDomain:
-        "maintenance-65ca8.firebaseapp.com",
+<button onclick="showSection('planner')">
+Weekly Planner
+</button>
 
-    databaseURL:
-        "https://maintenance-65ca8-default-rtdb.firebaseio.com",
+<button onclick="showSection('reports')">
+Reports
+</button>
 
-    projectId:
-        "maintenance-65ca8",
-
-    storageBucket:
-        "maintenance-65ca8.firebasestorage.app",
-
-    messagingSenderId:
-        "283957938686",
-
-    appId:
-        "1:283957938686:web:abf50ab437a1fc18e9d8af",
-
-    measurementId:
-        "G-MVWC3D0N0P"
-
-};
+</nav>
 
 
-const app =
-    initializeApp(firebaseConfig);
+<!-- =====================================================
+MAINTENANCE
+===================================================== -->
 
-const database =
-    getDatabase(app);
+<div id="maintenance" class="section">
 
+<h2>Maintenance Issues</h2>
+
+<div class="actions">
+
+<button onclick="newIssue()">
++ New Issue
+</button>
+
+<button
+class="success"
+onclick="exportIssues()">
+Export Excel / CSV
+</button>
+
+</div>
+
+<br>
+
+<div class="filters">
+
+<input
+id="searchIssue"
+placeholder="Search issue, branch, asset..."
+oninput="renderIssues()">
+
+<select
+id="filterStatus"
+onchange="renderIssues()">
+
+<option value="">All Status</option>
+<option>Open</option>
+<option>In Progress</option>
+<option>Closed</option>
+
+</select>
+
+<select
+id="filterBranch"
+onchange="renderIssues()">
+
+<option value="">All Branches</option>
+
+</select>
+
+</div>
+
+
+<table>
+
+<thead>
+
+<tr>
+<th>ID</th>
+<th>Date</th>
+<th>Problem</th>
+<th>Branch</th>
+<th>Asset</th>
+<th>Status</th>
+<th>Cost</th>
+<th>Actions</th>
+</tr>
+
+</thead>
+
+<tbody id="issuesTable"></tbody>
+
+</table>
+
+</div>
+
+
+<!-- =====================================================
+ISSUE FORM
+===================================================== -->
+
+<div
+id="issueForm"
+class="section hidden">
+
+<h2 id="formTitle">
+New Maintenance Issue
+</h2>
+
+<input
+type="hidden"
+id="editIssueId">
+
+<div class="form-grid">
+
+<div class="form-group">
+<label>Issue Number</label>
+<input id="issueId" readonly>
+</div>
+
+<div class="form-group">
+<label>Date</label>
+<input type="date" id="issueDate">
+</div>
+
+<div class="form-group">
+<label>Problem / Issue Name</label>
+<input
+id="issueName"
+placeholder="Example: AC Water Leak">
+</div>
+
+<div class="form-group">
+<label>Branch</label>
+<input
+id="issueBranch"
+placeholder="Example: Abu Rawash">
+</div>
+
+<div class="form-group">
+<label>Equipment</label>
+<input
+id="issueAsset"
+placeholder="Example: AC-01">
+</div>
+
+<div class="form-group">
+<label>Status</label>
+<select id="issueStatus">
+<option>Open</option>
+<option>In Progress</option>
+<option>Closed</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Priority</label>
+<select id="issuePriority">
+<option>High</option>
+<option>Medium</option>
+<option>Low</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Cost EGP</label>
+<input
+type="number"
+id="issueCost"
+value="0">
+</div>
+
+<div class="form-group">
+<label>Technician</label>
+<input id="issueTechnician">
+</div>
+
+<div class="form-group">
+<label>Repair Start</label>
+<input
+type="datetime-local"
+id="repairStart">
+</div>
+
+<div class="form-group">
+<label>Repair End</label>
+<input
+type="datetime-local"
+id="repairEnd">
+</div>
+
+<div class="form-group">
+<label>Resolution Time</label>
+<input
+id="resolutionTime"
+readonly>
+</div>
+
+<div class="form-group full">
+<label>Problem Description</label>
+<textarea id="issueDescription"></textarea>
+</div>
+
+<div class="form-group full">
+<label>Cause / Root Cause</label>
+<textarea id="issueCause"></textarea>
+</div>
+
+<div class="form-group full">
+<label>Solution / Action Taken</label>
+<textarea id="issueAction"></textarea>
+</div>
+
+<div class="form-group full">
+<label>Timeline</label>
+<textarea
+id="issueTimeline"
+placeholder="09:00 - Problem reported
+09:30 - Technician arrived
+10:30 - Repair completed"></textarea>
+</div>
+
+<div class="form-group full">
+<label>Notes</label>
+<textarea id="issueNotes"></textarea>
+</div>
+
+</div>
+
+<div class="actions">
+
+<button
+class="success"
+onclick="saveIssue()">
+Save Issue
+</button>
+
+<button
+class="secondary"
+onclick="closeIssueForm()">
+Cancel
+</button>
+
+</div>
+
+</div>
+
+
+<!-- =====================================================
+WEEKLY PLANNER
+===================================================== -->
+
+<div
+id="planner"
+class="section hidden">
+
+<div class="week-header">
+
+<div>
+
+<h2 style="margin-bottom:5px">
+Weekly Technician Planner
+</h2>
+
+<span id="weekRange"></span>
+
+</div>
+
+<div>
+
+<button
+class="secondary"
+onclick="changeWeek(-1)">
+◀ Previous
+</button>
+
+<button
+onclick="goCurrentWeek()">
+This Week
+</button>
+
+<button
+class="secondary"
+onclick="changeWeek(1)">
+Next ▶
+</button>
+
+</div>
+
+</div>
+
+
+<!-- TODAY -->
+
+<div class="today-box">
+
+<h3 style="margin-top:0">
+Today's Tasks
+</h3>
+
+<div id="todayTasks">
+No tasks for today.
+</div>
+
+</div>
+
+
+<!-- ADD TASK -->
+
+<div class="section"
+style="background:#f9fafb">
+
+<h3>
+Add Weekly Task
+</h3>
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Date</label>
+
+<input
+type="date"
+id="taskDate">
+
+</div>
+
+
+<div class="form-group">
+
+<label>Technician</label>
+
+<input
+id="taskTechnician"
+placeholder="Technician name">
+
+</div>
+
+
+<div class="form-group">
+
+<label>Task</label>
+
+<input
+id="taskName"
+placeholder="Example: AC Inspection">
+
+</div>
+
+
+<div class="form-group">
+
+<label>Branch</label>
+
+<input
+id="taskBranch"
+placeholder="Branch">
+
+</div>
+
+
+<div class="form-group">
+
+<label>Location / Equipment</label>
+
+<input
+id="taskAsset"
+placeholder="Equipment / Location">
+
+</div>
+
+
+<div class="form-group">
+
+<label>Priority</label>
+
+<select id="taskPriority">
+<option>High</option>
+<option selected>Medium</option>
+<option>Low</option>
+</select>
+
+</div>
+
+
+<div class="form-group full">
+
+<label>Notes</label>
+
+<textarea
+id="taskNotes"></textarea>
+
+</div>
+
+</div>
+
+<div class="actions">
+
+<button
+class="success"
+onclick="addTask()">
++ Add Task
+</button>
+
+</div>
+
+</div>
+
+
+<!-- WEEK -->
+
+<div class="week-grid"
+id="weekGrid">
+</div>
+
+
+<!-- TASK HISTORY -->
+
+<div style="margin-top:25px">
+
+<h3>
+Completed / Cancelled Tasks History
+</h3>
+
+<div id="taskHistory"></div>
+
+</div>
+
+</div>
+
+
+<!-- =====================================================
+REPORTS
+===================================================== -->
+
+<div
+id="reports"
+class="section hidden">
+
+<h2>
+Maintenance Problem Report
+</h2>
+
+<p>
+Select the problem, branch and month to see the complete history.
+</p>
+
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Problem</label>
+
+<select
+id="reportProblem"
+onchange="renderProblemReport()">
+
+<option value="">
+Select Problem
+</option>
+
+</select>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Branch</label>
+
+<select
+id="reportBranch"
+onchange="renderProblemReport()">
+
+<option value="">
+Select Branch
+</option>
+
+</select>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Month</label>
+
+<input
+type="month"
+id="reportMonth"
+onchange="renderProblemReport()">
+
+</div>
+
+</div>
+
+
+<div id="problemReport"
+style="margin-top:25px">
+
+<div class="section"
+style="background:#f9fafb">
+
+Select Problem + Branch + Month.
+
+</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+<script>
 
 /* =====================================================
 DATABASE
 ===================================================== */
 
-let db = {
+let db =
+JSON.parse(
+localStorage.getItem("maintenanceDB")
+) || {
 
-    issues: [],
-    tasks: []
+    issues:[],
+    tasks:[]
 
 };
 
 
+/*
+Compatibility with older version
+*/
+
+if(!Array.isArray(db.issues))
+    db.issues=[];
+
+if(!Array.isArray(db.tasks))
+    db.tasks=[];
+
+
 /* =====================================================
-LOAD DATABASE
+SAVE
 ===================================================== */
 
-async function loadDB(){
+function saveDB(){
 
-    try{
-
-        const snapshot =
-            await get(
-                ref(database, "maintenanceDB")
-            );
-
-
-        if(snapshot.exists()){
-
-            const data =
-                snapshot.val();
-
-
-            db = {
-
-                issues:
-                    Array.isArray(data.issues)
-                    ? data.issues
-                    : Object.values(
-                        data.issues || {}
-                    ),
-
-                tasks:
-                    Array.isArray(data.tasks)
-                    ? data.tasks
-                    : Object.values(
-                        data.tasks || {}
-                    )
-
-            };
-
-        }
-
-
-        if(!Array.isArray(db.issues))
-            db.issues=[];
-
-
-        if(!Array.isArray(db.tasks))
-            db.tasks=[];
-
-
-        refresh();
-
-        renderPlanner();
-
-    }
-    catch(error){
-
-        console.error(
-            "Firebase Load Error:",
-            error
-        );
-
-        alert(
-            "Unable to connect to Firebase."
-        );
-
-    }
+    localStorage.setItem(
+        "maintenanceDB",
+        JSON.stringify(db)
+    );
 
 }
-
-
-/* =====================================================
-SAVE DATABASE
-===================================================== */
-
-async function saveDB(){
-
-    try{
-
-        await set(
-            ref(database, "maintenanceDB"),
-            db
-        );
-
-    }
-    catch(error){
-
-        console.error(
-            "Firebase Save Error:",
-            error
-        );
-
-        alert(
-            "Error saving data to Firebase."
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-REALTIME LISTENER
-===================================================== */
-
-onValue(
-    ref(database, "maintenanceDB"),
-    snapshot => {
-
-        if(!snapshot.exists())
-            return;
-
-
-        const data =
-            snapshot.val();
-
-
-        db = {
-
-            issues:
-                Array.isArray(data.issues)
-                ? data.issues
-                : Object.values(
-                    data.issues || {}
-                ),
-
-            tasks:
-                Array.isArray(data.tasks)
-                ? data.tasks
-                : Object.values(
-                    data.tasks || {}
-                )
-
-        };
-
-
-        if(!Array.isArray(db.issues))
-            db.issues=[];
-
-
-        if(!Array.isArray(db.tasks))
-            db.tasks=[];
-
-
-        refresh();
-
-
-        if(
-            !document
-            .getElementById("planner")
-            .classList.contains("hidden")
-        ){
-
-            renderPlanner();
-
-        }
-
-    }
-);
 
 
 /* =====================================================
@@ -246,32 +922,16 @@ function escapeHTML(value){
 
 function todayISO(){
 
-    const d =
-        new Date();
-
-    const year =
-        d.getFullYear();
-
-    const month =
-        String(
-            d.getMonth()+1
-        ).padStart(2,"0");
-
-    const day =
-        String(
-            d.getDate()
-        ).padStart(2,"0");
-
-    return `${year}-${month}-${day}`;
+    return new Date()
+        .toISOString()
+        .slice(0,10);
 
 }
 
 
 function formatDate(date){
 
-    if(!date)
-        return "-";
-
+    if(!date) return "-";
 
     return new Date(
         date + "T00:00:00"
@@ -293,7 +953,7 @@ function showSection(section){
         "issueForm",
         "planner",
         "reports"
-    ].forEach(id=>{
+    ].forEach(id => {
 
         const el =
             document.getElementById(id);
@@ -312,10 +972,8 @@ function showSection(section){
     if(section==="maintenance")
         renderIssues();
 
-
     if(section==="planner")
         renderPlanner();
-
 
     if(section==="reports"){
 
@@ -336,7 +994,6 @@ function generateIssueId(){
 
     let max=0;
 
-
     db.issues.forEach(x=>{
 
         const n =
@@ -344,7 +1001,6 @@ function generateIssueId(){
                 String(x.id)
                 .replace(/\D/g,"")
             ) || 0;
-
 
         if(n>max)
             max=n;
@@ -433,11 +1089,8 @@ function newIssue(){
 
 
     window.scrollTo({
-
         top:0,
-
         behavior:"smooth"
-
     });
 
 }
@@ -463,7 +1116,6 @@ function calculateResolutionTime(){
             "repairStart"
         ).value;
 
-
     const end =
         document.getElementById(
             "repairEnd"
@@ -482,8 +1134,7 @@ function calculateResolutionTime(){
 
 
     const diff =
-        new Date(end)
-        -
+        new Date(end) -
         new Date(start);
 
 
@@ -502,7 +1153,6 @@ function calculateResolutionTime(){
         Math.floor(
             diff / 3600000
         );
-
 
     const minutes =
         Math.floor(
@@ -539,7 +1189,7 @@ document
 SAVE ISSUE
 ===================================================== */
 
-async function saveIssue(){
+function saveIssue(){
 
     const id =
         document.getElementById(
@@ -647,34 +1297,34 @@ async function saveIssue(){
     }
 
 
-    const index =
-        db.issues.findIndex(
-            x=>x.id===id
+    const existing =
+        db.issues.find(
+            x => x.id === id
         );
 
 
-    if(index>=0){
+    if(existing){
 
-        db.issues[index]=issue;
+        Object.assign(
+            existing,
+            issue
+        );
 
-    }
-    else{
+    }else{
 
         db.issues.push(issue);
 
     }
 
 
-    await saveDB();
-
+    saveDB();
 
     closeIssueForm();
 
     refresh();
 
-
     alert(
-        index>=0
+        existing
         ? "Issue updated successfully."
         : "Issue added successfully."
     );
@@ -690,12 +1340,10 @@ function editIssue(id){
 
     const x =
         db.issues.find(
-            z=>z.id===id
+            z => z.id === id
         );
 
-
-    if(!x)
-        return;
+    if(!x) return;
 
 
     document
@@ -808,16 +1456,14 @@ function editIssue(id){
 DELETE ISSUE
 ===================================================== */
 
-async function deleteIssue(id){
+function deleteIssue(id){
 
     const issue =
         db.issues.find(
-            x=>x.id===id
+            x => x.id === id
         );
 
-
-    if(!issue)
-        return;
+    if(!issue) return;
 
 
     if(!confirm(
@@ -828,11 +1474,11 @@ async function deleteIssue(id){
 
     db.issues =
         db.issues.filter(
-            x=>x.id!==id
+            x => x.id !== id
         );
 
 
-    await saveDB();
+    saveDB();
 
     refresh();
 
@@ -847,17 +1493,15 @@ function viewIssue(id){
 
     const issue =
         db.issues.find(
-            x=>x.id===id
+            x => x.id === id
         );
 
-
-    if(!issue)
-        return;
+    if(!issue) return;
 
 
     const history =
-        db.issues.filter(x=>
-
+        db.issues.filter(
+            x =>
             x.name
             .trim()
             .toLowerCase()
@@ -865,9 +1509,7 @@ function viewIssue(id){
             issue.name
             .trim()
             .toLowerCase()
-
             &&
-
             x.branch
             .trim()
             .toLowerCase()
@@ -875,14 +1517,13 @@ function viewIssue(id){
             issue.branch
             .trim()
             .toLowerCase()
-
         );
 
 
     const totalCost =
         history.reduce(
             (sum,x)=>
-            sum+Number(x.cost||0),
+            sum + Number(x.cost || 0),
             0
         );
 
@@ -896,8 +1537,7 @@ function viewIssue(id){
             </h2>
 
             <p>
-                <b>Issue:</b>
-                ${issue.id}
+                <b>Issue:</b> ${issue.id}
             </p>
 
             <p>
@@ -912,7 +1552,7 @@ function viewIssue(id){
 
             <p>
                 <b>Asset:</b>
-                ${escapeHTML(issue.asset||"-")}
+                ${escapeHTML(issue.asset || "-")}
             </p>
 
             <p>
@@ -922,15 +1562,15 @@ function viewIssue(id){
 
             <p>
                 <b>Cost:</b>
-                ${Number(
-                    issue.cost||0
-                ).toLocaleString()}
+                ${Number(issue.cost || 0).toLocaleString()}
                 EGP
             </p>
 
             <hr>
 
-            <h3>Timeline</h3>
+            <h3>
+                Timeline
+            </h3>
 
             <pre style="
                 white-space:pre-wrap;
@@ -940,17 +1580,14 @@ function viewIssue(id){
                 "No timeline recorded."
             )}</pre>
 
-
             <h3>
                 Complete Problem History
             </h3>
-
 
             <p>
                 Occurrences:
                 <b>${history.length}</b>
             </p>
-
 
             <p>
                 Total Cost:
@@ -959,7 +1596,6 @@ function viewIssue(id){
                     EGP
                 </b>
             </p>
-
 
             ${
                 history.map((x,i)=>`
@@ -975,28 +1611,28 @@ function viewIssue(id){
 
                         <b>Description:</b>
                         ${escapeHTML(
-                            x.description||"-"
+                            x.description || "-"
                         )}
 
                         <br><br>
 
                         <b>Cause:</b>
                         ${escapeHTML(
-                            x.cause||"-"
+                            x.cause || "-"
                         )}
 
                         <br><br>
 
                         <b>Solution:</b>
                         ${escapeHTML(
-                            x.action||"-"
+                            x.action || "-"
                         )}
 
                         <br><br>
 
                         <b>Cost:</b>
                         ${Number(
-                            x.cost||0
+                            x.cost || 0
                         ).toLocaleString()}
                         EGP
 
@@ -1019,48 +1655,32 @@ function viewIssue(id){
 
 
     win.document.write(`
-
         <html>
-
         <head>
-
-        <title>
-            Maintenance Report
-        </title>
-
+        <title>Maintenance Report</title>
         <style>
-
         body{
             font-family:Arial;
             padding:30px;
             background:#f3f4f6
         }
-
         .section{
             background:#fff;
             padding:25px;
             border-radius:10px
         }
-
         .history-item{
             padding:15px;
             border-left:3px solid #2563eb;
             background:#f9fafb;
             margin:10px 0
         }
-
         </style>
-
         </head>
-
         <body>
-
         ${html}
-
         </body>
-
         </html>
-
     `);
 
 }
@@ -1102,27 +1722,21 @@ function renderIssues(){
 
 
             return(
-
                 text.includes(search)
-
                 &&
-
                 (!status ||
                  x.status===status)
-
                 &&
-
                 (!branch ||
                  x.branch===branch)
-
             );
 
         })
         .sort(
             (a,b)=>
-            new Date(b.date||0)
+            new Date(b.date || 0)
             -
-            new Date(a.date||0)
+            new Date(a.date || 0)
         );
 
 
@@ -1135,7 +1749,7 @@ function renderIssues(){
             <tr>
 
                 <td>
-                    <b>${escapeHTML(x.id)}</b>
+                    <b>${x.id}</b>
                 </td>
 
                 <td>
@@ -1159,13 +1773,13 @@ function renderIssues(){
 
                 <td>
                     ${escapeHTML(
-                        x.branch||"-"
+                        x.branch || "-"
                     )}
                 </td>
 
                 <td>
                     ${escapeHTML(
-                        x.asset||"-"
+                        x.asset || "-"
                     )}
                 </td>
 
@@ -1173,12 +1787,10 @@ function renderIssues(){
 
                     <span
                     class="status
-                    ${String(x.status||"")
-                    .replace(" ","")}">
+                    ${x.status
+                        .replace(" ","")}">
 
-                        ${escapeHTML(
-                            x.status||""
-                        )}
+                        ${x.status}
 
                     </span>
 
@@ -1187,7 +1799,7 @@ function renderIssues(){
                 <td>
 
                     ${Number(
-                        x.cost||0
+                        x.cost || 0
                     ).toLocaleString()}
                     EGP
 
@@ -1219,17 +1831,11 @@ function renderIssues(){
         ||
 
         `
-
         <tr>
-
         <td colspan="8">
-
         No records found.
-
         </td>
-
         </tr>
-
         `;
 
 
@@ -1270,11 +1876,9 @@ function updateBranchFilter(){
         </option>` +
 
         branches.map(x=>
-
             `<option value="${escapeHTML(x)}">
             ${escapeHTML(x)}
             </option>`
-
         ).join("");
 
 
@@ -1296,26 +1900,20 @@ function getWeekStart(date){
     const d =
         new Date(date);
 
-
     const day =
         d.getDay();
 
-
     const diff =
-        day===6
-        ?0
-        :day+1;
+        day === 6
+        ? 0
+        : day + 1;
 
 
     d.setDate(
-        d.getDate()-diff
+        d.getDate() - diff
     );
 
-
-    d.setHours(
-        0,0,0,0
-    );
-
+    d.setHours(0,0,0,0);
 
     return d;
 
@@ -1333,20 +1931,14 @@ function getWeekDays(){
     const days=[];
 
 
-    for(
-        let i=0;
-        i<7;
-        i++
-    ){
+    for(let i=0;i<7;i++){
 
         const d =
             new Date(start);
 
-
         d.setDate(
             start.getDate()+i
         );
-
 
         days.push(d);
 
@@ -1366,7 +1958,6 @@ function changeWeek(amount){
         amount*7
     );
 
-
     renderPlanner();
 
 }
@@ -1376,7 +1967,6 @@ function goCurrentWeek(){
 
     plannerDate =
         new Date();
-
 
     renderPlanner();
 
@@ -1391,7 +1981,6 @@ function renderPlanner(){
 
     const start =
         days[0];
-
 
     const end =
         days[6];
@@ -1423,16 +2012,15 @@ function renderPlanner(){
 
             const tasks =
                 db.tasks.filter(
-                    x=>x.date===date
+                    x => x.date === date
                 );
 
 
             const isToday =
-                date===todayISO();
+                date === todayISO();
 
 
             const names=[
-
                 "Sunday",
                 "Monday",
                 "Tuesday",
@@ -1440,7 +2028,6 @@ function renderPlanner(){
                 "Thursday",
                 "Friday",
                 "Saturday"
-
             ];
 
 
@@ -1448,7 +2035,7 @@ function renderPlanner(){
 
             <div class="
                 day-column
-                ${isToday?"today":""}
+                ${isToday ? "today":""}
             ">
 
                 <div class="day-title">
@@ -1470,27 +2057,19 @@ function renderPlanner(){
 
                 ${
                     tasks.length
-
                     ?
-
-                    tasks
-                    .map(taskCard)
-                    .join("")
-
+                    tasks.map(
+                        taskCard
+                    ).join("")
                     :
-
                     `
-
                     <div style="
                         text-align:center;
                         color:#999;
                         padding-top:35px
                     ">
-
                         No tasks
-
                     </div>
-
                     `
                 }
 
@@ -1547,7 +2126,8 @@ function taskCard(task){
             <small>
                 Technician:
                 ${escapeHTML(
-                    task.technician||"-"
+                    task.technician ||
+                    "-"
                 )}
             </small>
 
@@ -1556,7 +2136,8 @@ function taskCard(task){
             <small>
                 Branch:
                 ${escapeHTML(
-                    task.branch||"-"
+                    task.branch ||
+                    "-"
                 )}
             </small>
 
@@ -1565,41 +2146,33 @@ function taskCard(task){
             <small>
                 Location:
                 ${escapeHTML(
-                    task.asset||"-"
+                    task.asset ||
+                    "-"
                 )}
             </small>
 
             <br><br>
 
             <span class="badge">
-                ${escapeHTML(
-                    task.priority
-                )}
+                ${task.priority}
             </span>
 
             <span class="badge">
-                ${escapeHTML(
-                    task.status
-                )}
+                ${task.status}
             </span>
 
             <br><br>
 
             ${
                 task.status==="Planned"
-
                 ?
-
                 `
-
                 <button
                 class="success"
                 onclick="
                 completeTask('${task.id}')
                 ">
-
                 ✓ Done
-
                 </button>
 
                 <button
@@ -1607,27 +2180,18 @@ function taskCard(task){
                 onclick="
                 cancelTask('${task.id}')
                 ">
-
                 Cancel
-
                 </button>
-
                 `
-
                 :
-
                 `
-
                 <button
                 class="secondary"
                 onclick="
                 viewTask('${task.id}')
                 ">
-
                 View
-
                 </button>
-
                 `
             }
 
@@ -1642,7 +2206,7 @@ function taskCard(task){
 ADD TASK
 ===================================================== */
 
-async function addTask(){
+function addTask(){
 
     const date =
         document.getElementById(
@@ -1662,11 +2226,9 @@ async function addTask(){
         ).value.trim();
 
 
-    if(
-        !date ||
-        !technician ||
-        !name
-    ){
+    if(!date ||
+       !technician ||
+       !name){
 
         alert(
             "Please enter Date, Technician and Task."
@@ -1680,7 +2242,8 @@ async function addTask(){
     const task={
 
         id:
-            "TASK-"+Date.now(),
+            "TASK-" +
+            Date.now(),
 
         date,
 
@@ -1722,14 +2285,12 @@ async function addTask(){
 
     db.tasks.push(task);
 
-
-    await saveDB();
+    saveDB();
 
 
     document.getElementById(
         "taskName"
     ).value="";
-
 
     document.getElementById(
         "taskNotes"
@@ -1765,16 +2326,14 @@ function quickAddTask(date){
 COMPLETE TASK
 ===================================================== */
 
-async function completeTask(id){
+function completeTask(id){
 
     const task =
         db.tasks.find(
-            x=>x.id===id
+            x => x.id === id
         );
 
-
-    if(!task)
-        return;
+    if(!task) return;
 
 
     if(!confirm(
@@ -1785,13 +2344,11 @@ async function completeTask(id){
 
     task.status="Done";
 
-
     task.completedAt =
         new Date().toISOString();
 
 
-    await saveDB();
-
+    saveDB();
 
     renderPlanner();
 
@@ -1802,16 +2359,14 @@ async function completeTask(id){
 CANCEL TASK
 ===================================================== */
 
-async function cancelTask(id){
+function cancelTask(id){
 
     const task =
         db.tasks.find(
-            x=>x.id===id
+            x => x.id === id
         );
 
-
-    if(!task)
-        return;
+    if(!task) return;
 
 
     if(!confirm(
@@ -1822,13 +2377,11 @@ async function cancelTask(id){
 
     task.status="Cancelled";
 
-
     task.cancelledAt =
         new Date().toISOString();
 
 
-    await saveDB();
-
+    saveDB();
 
     renderPlanner();
 
@@ -1846,13 +2399,11 @@ function viewTask(id){
             x=>x.id===id
         );
 
-
-    if(!task)
-        return;
+    if(!task) return;
 
 
     alert(
-`Task:
+        `Task:
 ${task.name}
 
 Date:
@@ -1862,10 +2413,10 @@ Technician:
 ${task.technician}
 
 Branch:
-${task.branch||"-"}
+${task.branch || "-"}
 
 Location:
-${task.asset||"-"}
+${task.asset || "-"}
 
 Priority:
 ${task.priority}
@@ -1874,7 +2425,7 @@ Status:
 ${task.status}
 
 Notes:
-${task.notes||"-"}`
+${task.notes || "-"}`
     );
 
 }
@@ -1913,9 +2464,9 @@ function renderTodayTasks(){
 
 
     container.innerHTML =
-        tasks
-        .map(taskCard)
-        .join("");
+        tasks.map(
+            taskCard
+        ).join("");
 
 }
 
@@ -1929,7 +2480,7 @@ function renderTaskHistory(){
     const history =
         db.tasks
         .filter(
-            x=>
+            x =>
             x.status==="Done"
             ||
             x.status==="Cancelled"
@@ -1967,8 +2518,7 @@ function renderTaskHistory(){
 
 
     container.innerHTML =
-        history
-        .slice(0,30)
+        history.slice(0,30)
         .map(task=>`
 
             <div class="history-item">
@@ -1982,7 +2532,9 @@ function renderTaskHistory(){
                 <br>
 
                 Date:
-                ${formatDate(task.date)}
+                ${formatDate(
+                    task.date
+                )}
 
                 <br>
 
@@ -1994,16 +2546,11 @@ function renderTaskHistory(){
                 <br>
 
                 Status:
-                <b>
-                    ${escapeHTML(
-                        task.status
-                    )}
-                </b>
+                <b>${task.status}</b>
 
             </div>
 
-        `)
-        .join("");
+        `).join("");
 
 }
 
@@ -2083,7 +2630,6 @@ function prepareReportFilters(){
     problem.value =
         currentProblem;
 
-
     branch.value =
         currentBranch;
 
@@ -2094,14 +2640,11 @@ function prepareReportFilters(){
         );
 
 
-    if(!month.value){
-
+    if(!month.value)
         month.value =
             new Date()
             .toISOString()
             .slice(0,7);
-
-    }
 
 }
 
@@ -2136,19 +2679,14 @@ function renderProblemReport(){
         );
 
 
-    if(
-        !problem ||
-        !branch ||
-        !month
-    ){
+    if(!problem ||
+       !branch ||
+       !month){
 
         container.innerHTML=`
 
-            <div
-            class="section"
-            style="
-            background:#f9fafb
-            ">
+            <div class="section"
+            style="background:#f9fafb">
 
                 Select Problem + Branch + Month
                 to generate the report.
@@ -2201,20 +2739,22 @@ function renderProblemReport(){
     const totalCost =
         records.reduce(
             (sum,x)=>
-            sum+Number(x.cost||0),
+            sum + Number(x.cost || 0),
             0
         );
 
 
     const resolved =
         records.filter(
-            x=>x.status==="Closed"
+            x =>
+            x.status==="Closed"
         ).length;
 
 
     const open =
         records.filter(
-            x=>x.status!=="Closed"
+            x =>
+            x.status!=="Closed"
         ).length;
 
 
@@ -2251,7 +2791,6 @@ function renderProblemReport(){
 
             </div>
 
-
             <div class="report-box">
 
                 Resolved
@@ -2262,7 +2801,6 @@ function renderProblemReport(){
 
             </div>
 
-
             <div class="report-box">
 
                 Pending
@@ -2272,7 +2810,6 @@ function renderProblemReport(){
                 </strong>
 
             </div>
-
 
             <div class="report-box">
 
@@ -2297,11 +2834,9 @@ function renderProblemReport(){
 
             ${
                 records.length
-
                 ?
 
                 `
-
                 <table>
 
                 <thead>
@@ -2319,7 +2854,6 @@ function renderProblemReport(){
                 </tr>
 
                 </thead>
-
 
                 <tbody>
 
@@ -2344,14 +2878,11 @@ function renderProblemReport(){
                                 <span
                                 class="
                                 status
-                                ${String(
-                                    x.status||""
-                                ).replace(" ","")}
+                                ${x.status
+                                    .replace(" ","")}
                                 ">
 
-                                ${escapeHTML(
-                                    x.status||""
-                                )}
+                                ${x.status}
 
                                 </span>
 
@@ -2359,25 +2890,28 @@ function renderProblemReport(){
 
                             <td>
                                 ${escapeHTML(
-                                    x.description||"-"
+                                    x.description ||
+                                    "-"
                                 )}
                             </td>
 
                             <td>
                                 ${escapeHTML(
-                                    x.cause||"-"
+                                    x.cause ||
+                                    "-"
                                 )}
                             </td>
 
                             <td>
                                 ${escapeHTML(
-                                    x.action||"-"
+                                    x.action ||
+                                    "-"
                                 )}
                             </td>
 
                             <td>
                                 ${Number(
-                                    x.cost||0
+                                    x.cost || 0
                                 ).toLocaleString()}
                                 EGP
                             </td>
@@ -2391,13 +2925,11 @@ function renderProblemReport(){
                 </tbody>
 
                 </table>
-
                 `
 
                 :
 
                 `
-
                 <div style="
                     padding:25px;
                     text-align:center;
@@ -2409,7 +2941,6 @@ function renderProblemReport(){
                     branch and month.
 
                 </div>
-
                 `
 
             }
@@ -2417,8 +2948,7 @@ function renderProblemReport(){
         </div>
 
 
-        <div
-        class="section"
+        <div class="section"
         style="
         background:#111827;
         color:#fff
@@ -2439,13 +2969,11 @@ function renderProblemReport(){
             </div>
 
             <p>
-
                 ${records.length}
                 occurrence(s)
                 for this problem at
                 ${escapeHTML(branch)}
                 during ${month}.
-
             </p>
 
         </div>
@@ -2463,17 +2991,12 @@ function exportIssues(){
 
     if(!db.issues.length){
 
-        alert(
-            "No maintenance records."
-        );
-
+        alert("No maintenance records.");
         return;
 
     }
 
-
-    const headers=[
-
+    const headers = [
         "Issue ID",
         "Date",
         "Problem",
@@ -2489,78 +3012,70 @@ function exportIssues(){
         "Timeline",
         "Resolution Time",
         "Notes"
-
     ];
 
+    const rows = db.issues.map(x => [
 
-    const rows =
-        db.issues.map(x=>[
+        x.id,
+        x.date,
+        x.name,
+        x.branch,
+        x.asset,
+        x.status,
+        x.priority,
+        x.cost,
+        x.technician,
+        x.description,
+        x.cause,
+        x.action,
+        x.timeline,
+        x.resolutionTime,
+        x.notes
 
-            x.id,
-            x.date,
-            x.name,
-            x.branch,
-            x.asset,
-            x.status,
-            x.priority,
-            x.cost,
-            x.technician,
-            x.description,
-            x.cause,
-            x.action,
-            x.timeline,
-            x.resolutionTime,
-            x.notes
+    ].map(v => {
 
-        ].map(v=>
-
-            `"${String(v??"")
+        return `"${String(v ?? "")
             .replace(/"/g,'""')
-            .replace(/\r?\n/g," ")}"`
+            .replace(/\r?\n/g," ")
+        }`;
 
-        ).join(","));
+    }).join(","));
 
+    /*
+       UTF-8 BOM
+       This tells Microsoft Excel to read
+       Arabic correctly.
+    */
 
     const csv =
-        "\uFEFF"+
-        headers.join(",")+
-        "\r\n"+
+        "\uFEFF" +
+        headers.join(",") +
+        "\r\n" +
         rows.join("\r\n");
 
-
-    const blob =
-        new Blob(
-            [csv],
-            {
-                type:
-                "text/csv;charset=utf-8;"
-            }
-        );
-
+    const blob = new Blob(
+        [csv],
+        {
+            type: "text/csv;charset=utf-8;"
+        }
+    );
 
     const url =
         URL.createObjectURL(blob);
 
-
     const a =
         document.createElement("a");
 
-
-    a.href=url;
-
+    a.href = url;
 
     a.download =
         "Maintenance_Report.csv";
 
-
     document.body.appendChild(a);
-
 
     a.click();
 
-
     document.body.removeChild(a);
-
 
     URL.revokeObjectURL(url);
 
@@ -2595,29 +3110,25 @@ function refresh(){
 
 
     const closed =
-        db.issues.filter(x=>
-
+        db.issues.filter(
+            x=>
             x.status==="Closed"
-
             &&
-
             x.date &&
             x.date.startsWith(month)
-
         ).length;
 
 
     const cost =
         db.issues
-        .filter(x=>
-
+        .filter(
+            x=>
             x.date &&
             x.date.startsWith(month)
-
         )
         .reduce(
             (sum,x)=>
-            sum+Number(x.cost||0),
+            sum + Number(x.cost || 0),
             0
         );
 
@@ -2640,7 +3151,8 @@ function refresh(){
     document.getElementById(
         "dCost"
     ).textContent=
-        cost.toLocaleString()+
+        cost.toLocaleString()
+        +
         " EGP";
 
 
@@ -2672,8 +3184,10 @@ document.getElementById(
     .slice(0,7);
 
 
-/* START */
-
-loadDB();
+refresh();
 
 </script>
+
+</body>
+</html>
+```
