@@ -700,24 +700,24 @@ placeholder="09:00 - Problem reported
 </div>
 
 <div class="form-group full">
-<label>Notes</label>
-<textarea id="issueNotes"></textarea>
-</div>
+    <label>Activity / Follow-up</label>
 
-</div>
+    <textarea
+        id="activityText"
+        placeholder="Example: Contacted technician Ahmed. He confirmed that the drain pipe needs replacement."
+    ></textarea>
 
-<div class="actions">
+    <button
+        type="button"
+        class="success"
+        onclick="addActivity()"
+        style="margin-top:8px;width:max-content">
+        + Add Update
+    </button>
 
-<button class="success" onclick="saveIssue()">
-Save Issue
-</button>
-
-<button class="secondary" onclick="closeIssueForm()">
-Cancel
-</button>
-
-</div>
-
+    <div id="activityPreview"
+         style="margin-top:15px">
+    </div>
 </div>
 
 
@@ -1445,104 +1445,237 @@ document
 /* =====================================================
 SAVE ISSUE
 ===================================================== */
-
-function saveIssue(){
+function addActivity(){
 
     const id =
-        document.getElementById(
-            "issueId"
-        ).value;
+        document.getElementById("issueId").value;
 
+    const text =
+        document.getElementById("activityText")
+        .value
+        .trim();
 
-    const issue={
+    if(!text){
 
-        id,
+        alert("Please enter the update details.");
 
-        date:
-            document.getElementById(
-                "issueDate"
-            ).value,
+        return;
 
-        name:
-            document.getElementById(
-                "issueName"
-            ).value.trim(),
+    }
 
-        branch:
-            document.getElementById(
-                "issueBranch"
-            ).value.trim(),
+    const issue =
+        db.issues.find(
+            x => x.id === id
+        );
 
-        asset:
-            document.getElementById(
-                "issueAsset"
-            ).value.trim(),
+    if(!issue){
 
-        status:
-            document.getElementById(
-                "issueStatus"
-            ).value,
+        alert(
+            "Please save the issue first."
+        );
 
-        priority:
-            document.getElementById(
-                "issuePriority"
-            ).value,
+        return;
 
-        cost:
-            Number(
-                document.getElementById(
-                    "issueCost"
-                ).value || 0
-            ),
+    }
+
+    if(!Array.isArray(issue.activities))
+        issue.activities=[];
+
+    issue.activities.push({
+
+        id:
+            "ACT-" +
+            Date.now(),
+
+        dateTime:
+            new Date().toISOString(),
 
         technician:
             document.getElementById(
                 "issueTechnician"
             ).value.trim(),
 
-        repairStart:
-            document.getElementById(
-                "repairStart"
-            ).value,
+        text:text
 
-        repairEnd:
-            document.getElementById(
-                "repairEnd"
-            ).value,
+    });
 
-        resolutionTime:
-            document.getElementById(
-                "resolutionTime"
-            ).value,
+    saveDB();
 
-        description:
-            document.getElementById(
-                "issueDescription"
-            ).value,
+    document.getElementById(
+        "activityText"
+    ).value="";
 
-        cause:
-            document.getElementById(
-                "issueCause"
-            ).value,
+    renderActivityPreview(
+        issue.activities
+    );
 
-        action:
-            document.getElementById(
-                "issueAction"
-            ).value,
+}
+    function renderActivityPreview(activities){
 
-        timeline:
-            document.getElementById(
-                "issueTimeline"
-            ).value,
+    const container =
+        document.getElementById(
+            "activityPreview"
+        );
 
-        notes:
-            document.getElementById(
-                "issueNotes"
-            ).value
+    if(!container)
+        return;
 
-    };
+    if(!activities || !activities.length){
 
+        container.innerHTML = `
+            <div style="
+                padding:15px;
+                background:#f9fafb;
+                border-radius:8px;
+                color:#777">
+                No updates yet.
+            </div>
+        `;
 
+        return;
+
+    }
+
+    const sorted =
+        [...activities].sort(
+            (a,b)=>
+                new Date(a.dateTime)
+                -
+                new Date(b.dateTime)
+        );
+
+    container.innerHTML = `
+
+        <h4>
+            Activity Timeline
+        </h4>
+
+        ${
+            sorted.map((a,index)=>`
+
+                <div style="
+                    border-left:3px solid #2563eb;
+                    padding:12px 15px;
+                    margin-bottom:10px;
+                    background:#f8fafc;
+                    border-radius:6px">
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        gap:10px;
+                        flex-wrap:wrap">
+
+                        <b>
+                            Update #${index + 1}
+                        </b>
+
+                        <small>
+                            ${formatDateTime(a.dateTime)}
+                        </small>
+
+                    </div>
+
+                    <div style="
+                        margin-top:7px">
+
+                        ${escapeHTML(a.text)}
+
+                    </div>
+
+                    ${
+                        a.technician
+                        ?
+                        `
+                        <small style="
+                            display:block;
+                            margin-top:7px;
+                            color:#6b7280">
+
+                            Technician:
+                            ${escapeHTML(
+                                a.technician
+                            )}
+
+                        </small>
+                        `
+                        :
+                        ""
+                    }
+
+                </div>
+
+            `).join("")
+        }
+
+    `;
+
+}
+function saveIssue(){
+
+    const existing =
+    db.issues.find(
+        x=>x.id===id
+    );
+
+const issue={
+
+    id,
+
+    date:
+        document.getElementById("issueDate").value,
+
+    name:
+        document.getElementById("issueName").value.trim(),
+
+    branch:
+        document.getElementById("issueBranch").value.trim(),
+
+    asset:
+        document.getElementById("issueAsset").value.trim(),
+
+    status:
+        document.getElementById("issueStatus").value,
+
+    priority:
+        document.getElementById("issuePriority").value,
+
+    cost:
+        Number(
+            document.getElementById("issueCost").value || 0
+        ),
+
+    technician:
+        document.getElementById("issueTechnician").value.trim(),
+
+    repairStart:
+        document.getElementById("repairStart").value,
+
+    repairEnd:
+        document.getElementById("repairEnd").value,
+
+    resolutionTime:
+        document.getElementById("resolutionTime").value,
+
+    description:
+        document.getElementById("issueDescription").value,
+
+    cause:
+        document.getElementById("issueCause").value,
+
+    action:
+        document.getElementById("issueAction").value,
+
+    timeline:
+        document.getElementById("issueTimeline").value,
+
+    notes:
+        document.getElementById("issueNotes").value,
+
+    activities:
+        existing?.activities || []
+
+};
     if(!issue.name){
 
         alert(
