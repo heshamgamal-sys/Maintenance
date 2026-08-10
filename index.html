@@ -861,7 +861,39 @@ Select Problem + Branch + Month.
 
 
 </div>
+<script type="module">
 
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getFirestore,
+doc,
+getDoc,
+setDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+
+ apiKey: "ضع المفتاح هنا",
+ authDomain: "اسم المشروع.firebaseapp.com",
+ projectId: "اسم المشروع"
+
+};
+
+const app =
+initializeApp(firebaseConfig);
+
+const firestore =
+getFirestore(app);
+
+window.firestore = firestore;
+window.doc = doc;
+window.getDoc = getDoc;
+window.setDoc = setDoc;
+
+</script>
 
 <script>
 
@@ -869,40 +901,42 @@ Select Problem + Branch + Month.
 DATABASE
 ===================================================== */
 
-let db =
-JSON.parse(
-localStorage.getItem("maintenanceDB")
-) || {
-
-    issues:[],
-    tasks:[]
-
+let db = {
+    issues: [],
+    tasks: []
 };
 
+async function loadDB() {
 
-/*
-Compatibility with older version
-*/
-
-if(!Array.isArray(db.issues))
-    db.issues=[];
-
-if(!Array.isArray(db.tasks))
-    db.tasks=[];
-
-
-/* =====================================================
-SAVE
-===================================================== */
-
-function saveDB(){
-
-    localStorage.setItem(
-        "maintenanceDB",
-        JSON.stringify(db)
+    const snap =
+    await getDoc(
+        doc(
+            firestore,
+            "system",
+            "database"
+        )
     );
 
+    if (snap.exists()) {
+        db = snap.data();
+    }
+
+    refresh();
 }
+
+async function saveDB() {
+
+    await setDoc(
+        doc(
+            firestore,
+            "system",
+            "database"
+        ),
+        db
+    );
+}
+
+loadDB();
 
 
 /* =====================================================
