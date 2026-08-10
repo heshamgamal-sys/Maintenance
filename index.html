@@ -1,40 +1,4026 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maintenance Management System</title><style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial;background:#f3f4f6;color:#1f2937}header{background:#111827;color:white;padding:18px 28px;display:flex;justify-content:space-between}.container{max-width:1500px;margin:auto;padding:25px}nav{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}button{border:0;padding:9px 14px;border-radius:7px;background:#2563eb;color:white;font-weight:bold;cursor:pointer}button.secondary{background:#6b7280}button.success{background:#16a34a}button.danger{background:#dc2626}button.warning{background:#d97706}.cards,.report-summary{display:grid;grid-template-columns:repeat(6,1fr);gap:15px}.card,.section,.report-card{background:white;border-radius:12px;padding:20px;box-shadow:0 2px 8px #0001;margin-bottom:20px}.card h3{margin:0 0 10px;color:#6b7280;font-size:13px}.card strong{font-size:25px}.hidden{display:none}.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.form-group{display:flex;flex-direction:column;gap:6px}.full{grid-column:1/-1}label{font-size:13px;font-weight:bold}input,select,textarea{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:7px}textarea{min-height:100px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:15px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:13px;vertical-align:top}th{background:#f9fafb}.status,.priority,.badge{padding:5px 9px;border-radius:20px;font-size:11px;font-weight:bold}.status.Open,.priority.High{background:#fee2e2;color:#991b1b}.status.InProgress,.priority.Medium{background:#fef3c7;color:#92400e}.status.Closed,.priority.Low{background:#dcfce7;color:#166534}.week-grid{display:grid;grid-template-columns:repeat(7,minmax(180px,1fr));gap:10px;overflow:auto}.day-column{min-height:350px;background:#f9fafb;border:1px solid #ddd;border-radius:10px;padding:10px}.day-column.today{border:2px solid #2563eb}.task-card{background:white;border:1px solid #ddd;border-radius:8px;padding:10px;margin-bottom:9px}.today-box{background:#eff6ff;border:1px solid #bfdbfe;padding:15px;border-radius:10px;margin-bottom:18px}.history-item,.activity{border-left:3px solid #2563eb;background:#f8fafc;padding:12px 15px;margin:10px 0;border-radius:7px}.activity-time{font-size:12px;color:#6b7280;margin-bottom:5px}.activity-type{font-size:11px;font-weight:bold;color:#1d4ed8;margin-right:8px}.activity-form{background:#f9fafb;border:1px solid #ddd;padding:15px;border-radius:10px;margin-top:15px}.report-box{background:#f9fafb;padding:15px;border-radius:10px}.report-box strong{display:block;font-size:22px;margin-top:6px}.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.modal{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:20px;z-index:9}.modal.hidden{display:none}.modal-box{width:min(1100px,100%);max-height:90vh;overflow:auto;background:white;border-radius:12px;padding:25px}.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.detail-box{background:#f9fafb;padding:12px;border-radius:8px}.detail-box small{display:block;color:#6b7280;margin-bottom:5px}@media(max-width:1200px){.cards,.report-summary{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.form-grid,.filters,.summary-grid,.detail-grid{grid-template-columns:1fr}.cards,.report-summary{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.cards,.report-summary{grid-template-columns:1fr}.container{padding:12px}}
-</style></head><body>
-<header><h1>Maintenance Management System</h1><span id="todayLabel"></span></header><div class="container">
-<div class="cards"><div class="card"><h3>Open Issues</h3><strong id="dOpen">0</strong></div><div class="card"><h3>In Progress</h3><strong id="dProgress">0</strong></div><div class="card"><h3>Closed This Month</h3><strong id="dClosed">0</strong></div><div class="card"><h3>Total Issues</h3><strong id="dTotal">0</strong></div><div class="card"><h3>Monthly Cost</h3><strong id="dCost">0 EGP</strong></div><div class="card"><h3>Monthly Repair Time</h3><strong id="dTime">0h 0m</strong></div></div>
-<nav><button onclick="showSection('maintenance')">Maintenance</button><button onclick="showSection('planner')">Weekly Planner</button><button onclick="showSection('reports')">Reports</button></nav>
-<div id="maintenance" class="section"><h2>Maintenance Issues</h2><div class="actions"><button onclick="newIssue()">+ New Issue</button><button class="success" onclick="exportIssues()">Export Excel / CSV</button><button class="warning" onclick="openMonthlyReport()">Monthly Summary</button></div><br><div class="filters"><input id="searchIssue" placeholder="Search issue, branch, asset..." oninput="renderIssues()"><select id="filterStatus" onchange="renderIssues()"><option value="">All Status</option><option>Open</option><option>In Progress</option><option>Closed</option></select><select id="filterBranch" onchange="renderIssues()"><option value="">All Branches</option></select><select id="filterProblem" onchange="renderIssues()"><option value="">All Problems</option></select></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Date</th><th>Problem</th><th>Branch</th><th>Asset</th><th>Status</th><th>Priority</th><th>Cost</th><th>Repair Time</th><th>Actions</th></tr></thead><tbody id="issuesTable"></tbody></table></div></div>
-<div id="issueForm" class="section hidden"><h2 id="formTitle">New Maintenance Issue</h2><input type="hidden" id="editIssueId"><div class="form-grid">
-<div class="form-group"><label>Issue Number</label><input id="issueId" readonly></div><div class="form-group"><label>Date</label><input type="date" id="issueDate"></div><div class="form-group"><label>Problem / Issue Name</label><input id="issueName"></div><div class="form-group"><label>Branch</label><input id="issueBranch"></div><div class="form-group"><label>Equipment</label><input id="issueAsset"></div><div class="form-group"><label>Status</label><select id="issueStatus"><option>Open</option><option>In Progress</option><option>Closed</option></select></div><div class="form-group"><label>Priority</label><select id="issuePriority"><option>High</option><option>Medium</option><option>Low</option></select></div><div class="form-group"><label>Cost EGP</label><input type="number" id="issueCost" value="0"></div><div class="form-group"><label>Technician</label><input id="issueTechnician"></div><div class="form-group"><label>Repair Start</label><input type="datetime-local" id="repairStart"></div><div class="form-group"><label>Repair End</label><input type="datetime-local" id="repairEnd"></div><div class="form-group"><label>Resolution Time</label><input id="resolutionTime" readonly></div><div class="form-group full"><label>Problem Description</label><textarea id="issueDescription"></textarea></div><div class="form-group full"><label>Cause / Root Cause</label><textarea id="issueCause"></textarea></div><div class="form-group full"><label>Solution / Action Taken</label><textarea id="issueAction"></textarea></div><div class="form-group full"><label>Timeline</label><textarea id="issueTimeline"></textarea></div><div class="form-group full"><label>Notes</label><textarea id="issueNotes"></textarea></div></div>
-<div class="activity-form"><h3>Issue Activity Log</h3><p>كل تحديث تسجله هنا يحفظ بتاريخ ووقت العملية ويظهر في تقرير العطل.</p><div class="form-grid"><div class="form-group"><label>Activity Type</label><select id="activityType"><option>Update</option><option>Called Technician</option><option>Technician Visit</option><option>Vendor Follow-up</option><option>Quotation</option><option>Repair Started</option><option>Repair Completed</option><option>Status Update</option><option>Other</option></select></div><div class="form-group"><label>Date & Time</label><input type="datetime-local" id="activityDateTime"></div><div class="form-group"><label>By / Technician</label><input id="activityBy"></div><div class="form-group full"><label>What happened?</label><textarea id="activityText" placeholder="Example: Called technician; he confirmed the spare part will be available tomorrow."></textarea></div></div><div class="actions"><button class="success" onclick="addActivityFromForm()">+ Add Update</button></div><div id="activityListForm"></div></div>
-<div class="actions"><button class="success" onclick="saveIssue()">Save Issue</button><button class="secondary" onclick="closeIssueForm()">Cancel</button></div></div>
-<div id="planner" class="section hidden"><div style="display:flex;justify-content:space-between;flex-wrap:wrap"><h2>Weekly Technician Planner</h2><div><button class="secondary" onclick="changeWeek(-1)">◀ Previous</button><button onclick="goCurrentWeek()">This Week</button><button class="secondary" onclick="changeWeek(1)">Next ▶</button></div></div><span id="weekRange"></span><div class="today-box"><h3>Today's Tasks</h3><div id="todayTasks"></div></div><div class="section"><h3>Add Weekly Task</h3><div class="form-grid"><div class="form-group"><label>Date</label><input type="date" id="taskDate"></div><div class="form-group"><label>Technician</label><input id="taskTechnician"></div><div class="form-group"><label>Task</label><input id="taskName"></div><div class="form-group"><label>Branch</label><input id="taskBranch"></div><div class="form-group"><label>Location / Equipment</label><input id="taskAsset"></div><div class="form-group"><label>Priority</label><select id="taskPriority"><option>High</option><option selected>Medium</option><option>Low</option></select></div><div class="form-group full"><label>Notes</label><textarea id="taskNotes"></textarea></div></div><div class="actions"><button class="success" onclick="addTask()">+ Add Task</button></div></div><div class="week-grid" id="weekGrid"></div><h3>Completed / Cancelled Tasks History</h3><div id="taskHistory"></div></div>
-<div id="reports" class="section hidden"><h2>Maintenance Reports</h2><div class="form-grid"><div class="form-group"><label>Problem</label><select id="reportProblem" onchange="renderProblemReport()"></select></div><div class="form-group"><label>Branch</label><select id="reportBranch" onchange="renderProblemReport()"></select></div><div class="form-group"><label>Month</label><input type="month" id="reportMonth" onchange="renderProblemReport()"></div></div><div id="problemReport"></div></div></div>
-<div id="detailModal" class="modal hidden"><div class="modal-box"><div style="display:flex;justify-content:space-between"><h2 id="detailTitle">Maintenance Report</h2><button class="danger" onclick="closeModal()">X</button></div><div id="detailContent"></div></div></div>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script><script>
-const firebaseConfig={apiKey:"AIzaSyBRhXbW3fk_a7-w2TZVAe4xAFkTMtjZla8",authDomain:"maintenance-65ca8.firebaseapp.com",databaseURL:"https://maintenance-65ca8-default-rtdb.firebaseio.com",projectId:"maintenance-65ca8",storageBucket:"maintenance-65ca8.firebasestorage.app",messagingSenderId:"283957938686",appId:"1:283957938686:web:abf50ab437a1fc18e9d8af",measurementId:"G-MVWC3D0N0P"};firebase.initializeApp(firebaseConfig);const firebaseDB=firebase.database();let db={issues:[],tasks:[]};
-const $=id=>document.getElementById(id), esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');function todayISO(){let d=new Date(),l=new Date(d-d.getTimezoneOffset()*60000);return l.toISOString().slice(0,10)}function nowLocal(){let d=new Date(),l=new Date(d-d.getTimezoneOffset()*60000);return l.toISOString().slice(0,16)}function fd(x){return x?new Date(x+'T00:00:00').toLocaleDateString('en-GB'):'-'}function fdt(x){let d=new Date(x);return x&&!isNaN(d)?d.toLocaleString('en-GB'):'-'}function mins(x){if(x.repairStart&&x.repairEnd){let d=new Date(x.repairEnd)-new Date(x.repairStart);if(d>=0)return Math.round(d/60000)}let m=String(x.resolutionTime||'').match(/(\d+)\s*h\s*(\d+)\s*m/i);return m?Number(m[1])*60+Number(m[2]):0}function mt(n){n=Math.max(0,Math.round(n||0));return Math.floor(n/60)+'h '+n%60+'m'}function month(){return new Date().toISOString().slice(0,7)}
-async function loadDB(){try{let s=await firebaseDB.ref('maintenance').once('value'),d=s.val()||{};db.issues=Array.isArray(d.issues)?d.issues:Object.values(d.issues||{});db.tasks=Array.isArray(d.tasks)?d.tasks:Object.values(d.tasks||{});db.issues.forEach(x=>{if(!Array.isArray(x.activities))x.activities=[]});refresh();renderPlanner()}catch(e){console.error(e);alert('Unable to load maintenance data from Firebase.')}}async function saveDB(){try{await firebaseDB.ref('maintenance').set(db)}catch(e){console.error(e);alert('Data could not be saved to Firebase.')}}
-function showSection(s){['maintenance','issueForm','planner','reports'].forEach(x=>$(x).classList.add('hidden'));$(s).classList.remove('hidden');if(s==='maintenance')renderIssues();if(s==='planner')renderPlanner();if(s==='reports'){prepareReports();renderProblemReport()}}function issueId(){let m=0;db.issues.forEach(x=>m=Math.max(m,parseInt(String(x.id).replace(/\D/g,''))||0));return'MNT-'+String(m+1).padStart(4,'0')}
-function newIssue(){showSection('issueForm');$('formTitle').textContent='New Maintenance Issue';$('editIssueId').value='';$('issueId').value=issueId();$('issueDate').value=todayISO();['issueName','issueBranch','issueAsset','issueTechnician','repairStart','repairEnd','issueDescription','issueCause','issueAction','issueTimeline','issueNotes'].forEach(i=>$(i).value='');$('issueCost').value=0;$('issueStatus').value='Open';$('issuePriority').value='Medium';$('resolutionTime').value='';$('activityDateTime').value=nowLocal();$('activityBy').value='';$('activityText').value='';$('activityListForm').innerHTML='No activity yet.'}function closeIssueForm(){$('issueForm').classList.add('hidden');$('maintenance').classList.remove('hidden')}
-function calc(){let a=$('repairStart').value,b=$('repairEnd').value;if(!a||!b){$('resolutionTime').value='';return}let d=new Date(b)-new Date(a);$('resolutionTime').value=d>=0?mt(d/60000):''}$('repairStart').addEventListener('change',calc);$('repairEnd').addEventListener('change',calc);
-function formIssue(){return{id:$('issueId').value,date:$('issueDate').value,name:$('issueName').value.trim(),branch:$('issueBranch').value.trim(),asset:$('issueAsset').value.trim(),status:$('issueStatus').value,priority:$('issuePriority').value,cost:Number($('issueCost').value||0),technician:$('issueTechnician').value.trim(),repairStart:$('repairStart').value,repairEnd:$('repairEnd').value,resolutionTime:$('resolutionTime').value,description:$('issueDescription').value,cause:$('issueCause').value,action:$('issueAction').value,timeline:$('issueTimeline').value,notes:$('issueNotes').value}}
-function addAct(x,text,type,by,when){if(!x.activities)x.activities=[];x.activities.push({id:'ACT-'+Date.now(),timestamp:when||new Date().toISOString(),type:type||'Update',by:by||'',text:text.trim()});x.activities.sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp))}function actList(x){let a=(x.activities||[]).slice().sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));$('activityListForm').innerHTML=a.length?a.map(z=>`<div class="activity"><div class="activity-time">${fdt(z.timestamp)} ${z.by?'| '+esc(z.by):''}</div><span class="activity-type">${esc(z.type)}</span>${esc(z.text)}</div>`).join(''):'No activity yet.'}
-function addActivityFromForm(){let text=$('activityText').value.trim(),id=$('issueId').value,x=db.issues.find(z=>z.id===id);if(!x){alert('Save the issue first, then add an update.');return}if(!text){alert('Please enter what happened.');return}addAct(x,text,$('activityType').value,$('activityBy').value.trim(),$('activityDateTime').value?new Date($('activityDateTime').value).toISOString():new Date().toISOString());saveDB();actList(x);$('activityText').value='';$('activityDateTime').value=nowLocal()}
-async function saveIssue(){let id=$('issueId').value,x=formIssue();if(!x.name||!x.date){alert('Please enter Problem and Date.');return}if(x.repairStart&&x.repairEnd&&new Date(x.repairEnd)<new Date(x.repairStart)){alert('Repair End cannot be before Repair Start.');return}let old=db.issues.find(z=>z.id===id),now=new Date().toISOString();if(old){if(!old.activities)old.activities=[];let oldStatus=old.status;Object.assign(old,x);addAct(old,oldStatus!==x.status?'Status changed from '+oldStatus+' to '+x.status+'.':'Issue details updated.','Status Update',x.technician,now)}else{x.activities=[];addAct(x,'Maintenance issue created.','Issue Created',x.technician,now);db.issues.push(x)}await saveDB();closeIssueForm();refresh();alert(old?'Issue updated successfully.':'Issue added successfully.')}
-function editIssue(id){let x=db.issues.find(z=>z.id===id);if(!x)return;showSection('issueForm');$('formTitle').textContent='Edit Maintenance Issue';$('editIssueId').value=id;Object.keys(formIssue()).forEach(()=>{});$('issueId').value=x.id;$('issueDate').value=x.date||'';$('issueName').value=x.name||'';$('issueBranch').value=x.branch||'';$('issueAsset').value=x.asset||'';$('issueStatus').value=x.status||'Open';$('issuePriority').value=x.priority||'Medium';$('issueCost').value=x.cost||0;$('issueTechnician').value=x.technician||'';$('repairStart').value=x.repairStart||'';$('repairEnd').value=x.repairEnd||'';$('resolutionTime').value=x.resolutionTime||'';$('issueDescription').value=x.description||'';$('issueCause').value=x.cause||'';$('issueAction').value=x.action||'';$('issueTimeline').value=x.timeline||'';$('issueNotes').value=x.notes||'';$('activityDateTime').value=nowLocal();$('activityBy').value=x.technician||'';$('activityText').value='';actList(x);calc()}
-async function delIssue(id){let x=db.issues.find(z=>z.id===id);if(x&&confirm('Delete '+x.id+' - '+x.name+'?')){db.issues=db.issues.filter(z=>z.id!==id);await saveDB();refresh()}}
-function history(x){return db.issues.filter(z=>String(z.name||'').trim().toLowerCase()===String(x.name||'').trim().toLowerCase()&&String(z.branch||'').trim().toLowerCase()===String(x.branch||'').trim().toLowerCase())}
-function viewIssue(id){let x=db.issues.find(z=>z.id===id);if(!x)return;let h=history(x),cost=h.reduce((s,z)=>s+Number(z.cost||0),0),time=h.reduce((s,z)=>s+mins(z),0),acts=(x.activities||[]).slice().sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));$('detailTitle').textContent=x.name+' - Problem Report';$('detailContent').innerHTML=`<div class="detail-grid"><div class="detail-box"><small>Issue ID</small><b>${esc(x.id)}</b></div><div class="detail-box"><small>Branch</small><b>${esc(x.branch||'-')}</b></div><div class="detail-box"><small>Equipment</small><b>${esc(x.asset||'-')}</b></div><div class="detail-box"><small>Status</small><b>${esc(x.status)}</b></div><div class="detail-box"><small>Priority</small><b>${esc(x.priority)}</b></div><div class="detail-box"><small>Current Cost</small><b>${Number(x.cost||0).toLocaleString()} EGP</b></div></div><div class="report-summary"><div class="report-box">Occurrences<strong>${h.length}</strong></div><div class="report-box">Total Cost<strong>${cost.toLocaleString()} EGP</strong></div><div class="report-box">Repair Time<strong>${mt(time)}</strong></div></div><div class="report-card"><h3>Current Issue Details</h3><p><b>Date:</b> ${fd(x.date)}</p><p><b>Technician:</b> ${esc(x.technician||'-')}</p><p><b>Description:</b> ${esc(x.description||'-')}</p><p><b>Root Cause:</b> ${esc(x.cause||'-')}</p><p><b>Action Taken:</b> ${esc(x.action||'-')}</p><p><b>Resolution Time:</b> ${esc(x.resolutionTime||'-')}</p></div><div class="report-card"><h3>Issue Activity Timeline</h3>${acts.length?acts.map((a,i)=>`<div class="activity"><div class="activity-time"><b>${i+1}.</b> ${fdt(a.timestamp)} ${a.by?'| '+esc(a.by):''}</div><span class="activity-type">${esc(a.type)}</span>${esc(a.text)}</div>`).join(''):'No activity recorded.'}</div><div class="report-card"><h3>Complete Problem History</h3><table><thead><tr><th>Date</th><th>Status</th><th>Technician</th><th>Cost</th><th>Repair Time</th></tr></thead><tbody>${h.map(z=>`<tr><td>${fd(z.date)}</td><td>${esc(z.status)}</td><td>${esc(z.technician||'-')}</td><td>${Number(z.cost||0).toLocaleString()} EGP</td><td>${mt(mins(z))}</td></tr>`).join('')}</tbody></table></div>`;$('detailModal').classList.remove('hidden')}function closeModal(){$('detailModal').classList.add('hidden')}
-function renderIssues(){let q=($('searchIssue')?.value||'').toLowerCase(),st=$('filterStatus')?.value||'',br=$('filterBranch')?.value||'',pr=$('filterProblem')?.value||'',arr=db.issues.filter(x=>`${x.id} ${x.name} ${x.branch} ${x.asset}`.toLowerCase().includes(q)&&(!st||x.status===st)&&(!br||x.branch===br)&&(!pr||x.name===pr)).sort((a,b)=>new Date(b.date)-new Date(a.date));$('issuesTable').innerHTML=arr.map(x=>`<tr><td>${esc(x.id)}</td><td>${fd(x.date)}</td><td><button class="link-btn" onclick="viewIssue('${x.id}')">${esc(x.name)}</button></td><td>${esc(x.branch||'-')}</td><td>${esc(x.asset||'-')}</td><td><span class="status ${String(x.status).replace(' ','')}">${esc(x.status)}</span></td><td><span class="priority ${x.priority}">${esc(x.priority)}</span></td><td>${Number(x.cost||0).toLocaleString()} EGP</td><td>${mt(mins(x))}</td><td><button onclick="viewIssue('${x.id}')">View</button> <button onclick="editIssue('${x.id}')">Edit</button> <button class="danger" onclick="delIssue('${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="10">No records found.</td></tr>';let bs=[...new Set(db.issues.map(x=>x.branch).filter(Boolean))].sort(),ps=[...new Set(db.issues.map(x=>x.name).filter(Boolean))].sort();$('filterBranch').innerHTML='<option value="">All Branches</option>'+bs.map(x=>`<option>${esc(x)}</option>`).join('');$('filterProblem').innerHTML='<option value="">All Problems</option>'+ps.map(x=>`<option>${esc(x)}</option>`).join('')}
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maintenance Management System</title>
 
-let plannerDate=new Date();function weekDays(){let d=new Date(plannerDate),day=d.getDay(),start=new Date(d);start.setDate(d.getDate()-(day===6?0:day+1));return Array.from({length:7},(_,i)=>{let x=new Date(start);x.setDate(start.getDate()+i);return x})}function changeWeek(n){plannerDate.setDate(plannerDate.getDate()+n*7);renderPlanner()}function goCurrentWeek(){plannerDate=new Date();renderPlanner()}function taskCard(t){return`<div class="task-card"><b>${esc(t.name)}</b><br><small>${esc(t.technician||'-')} | ${esc(t.branch||'-')}</small><br><span class="badge">${esc(t.priority)}</span> <span class="badge">${esc(t.status)}</span><br><br>${t.status==='Planned'?`<button class="success" onclick="doneTask('${t.id}')">Done</button> <button class="danger" onclick="cancelTask('${t.id}')">Cancel</button>`:`<button onclick="alert(${JSON.stringify('Task: ')}+${JSON.stringify(t.name)})">View</button>`}</div>`}function renderPlanner(){let ds=weekDays(),names=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];$('weekRange').textContent=fd(ds[0].toISOString().slice(0,10))+' - '+fd(ds[6].toISOString().slice(0,10));$('todayTasks').innerHTML=db.tasks.filter(x=>x.date===todayISO()).map(taskCard).join('')||'No tasks for today.';$('weekGrid').innerHTML=ds.map(d=>{let date=d.toISOString().slice(0,10),ts=db.tasks.filter(x=>x.date===date);return`<div class="day-column ${date===todayISO()?'today':''}"><b>${names[d.getDay()]}</b><br><small>${fd(date)}</small><hr>${ts.map(taskCard).join('')||'No tasks'}</div>`}).join('');$('taskHistory').innerHTML=db.tasks.filter(x=>x.status!=='Planned').slice(-30).reverse().map(x=>`<div class="history-item"><b>${esc(x.name)}</b><br>${fd(x.date)} | ${esc(x.technician)} | ${esc(x.status)}</div>`).join('')||'No history'}async function addTask(){let t={id:'TASK-'+Date.now(),date:$('taskDate').value,technician:$('taskTechnician').value.trim(),name:$('taskName').value.trim(),branch:$('taskBranch').value.trim(),asset:$('taskAsset').value.trim(),priority:$('taskPriority').value,notes:$('taskNotes').value,status:'Planned'};if(!t.date||!t.name||!t.technician){alert('Please enter Date, Technician and Task.');return}db.tasks.push(t);await saveDB();$('taskName').value='';$('taskNotes').value='';renderPlanner()}async function doneTask(id){let t=db.tasks.find(x=>x.id===id);if(t){t.status='Done';t.completedAt=new Date().toISOString();await saveDB();renderPlanner()}}async function cancelTask(id){let t=db.tasks.find(x=>x.id===id);if(t){t.status='Cancelled';t.cancelledAt=new Date().toISOString();await saveDB();renderPlanner()}}
-function prepareReports(){let p=[...new Set(db.issues.map(x=>x.name).filter(Boolean))].sort(),b=[...new Set(db.issues.map(x=>x.branch).filter(Boolean))].sort();$('reportProblem').innerHTML='<option value="">Select Problem</option>'+p.map(x=>`<option>${esc(x)}</option>`).join('');$('reportBranch').innerHTML='<option value="">Select Branch</option>'+b.map(x=>`<option>${esc(x)}</option>`).join('');if(!$('reportMonth').value)$('reportMonth').value=month()}function renderProblemReport(){let p=$('reportProblem').value,b=$('reportBranch').value,m=$('reportMonth').value;if(!p||!b||!m){$('problemReport').innerHTML='<div class="section">Select Problem + Branch + Month.</div>';return}let a=db.issues.filter(x=>x.name===p&&x.branch===b&&x.date?.startsWith(m)),c=a.reduce((s,x)=>s+Number(x.cost||0),0),t=a.reduce((s,x)=>s+mins(x),0);$('problemReport').innerHTML=`<div class="report-card"><h2>${esc(p)}</h2><p>Branch: <b>${esc(b)}</b> | Month: <b>${m}</b></p><div class="report-summary"><div class="report-box">Occurrences<strong>${a.length}</strong></div><div class="report-box">Cost<strong>${c.toLocaleString()} EGP</strong></div><div class="report-box">Repair Time<strong>${mt(t)}</strong></div></div><table><thead><tr><th>Date</th><th>Status</th><th>Technician</th><th>Cost</th><th>Repair Time</th></tr></thead><tbody>${a.map(x=>`<tr><td>${fd(x.date)}</td><td>${esc(x.status)}</td><td>${esc(x.technician||'-')}</td><td>${Number(x.cost||0).toLocaleString()} EGP</td><td>${mt(mins(x))}</td></tr>`).join('')}</tbody></table></div>`}
-function openMonthlyReport(){let m=month(),a=db.issues.filter(x=>x.date?.startsWith(m)),c=a.reduce((s,x)=>s+Number(x.cost||0),0);$('detailTitle').textContent='Monthly Maintenance Summary';$('detailContent').innerHTML=`<div class="report-card"><h2>${m}</h2><div class="report-summary"><div class="report-box">Issues<strong>${a.length}</strong></div><div class="report-box">Cost<strong>${c.toLocaleString()} EGP</strong></div></div></div>`;$('detailModal').classList.remove('hidden')}
-function exportIssues(){if(!db.issues.length){alert('No maintenance records.');return}let h=['Issue ID','Date','Problem','Branch','Equipment','Status','Priority','Cost','Technician','Repair Start','Repair End','Resolution Time','Description','Cause','Solution','Timeline','Notes','Activity Timeline'];let q=v=>`"${String(v??'').replace(/"/g,'""').replace(/
-?
-/g,' ')}"`;let rows=db.issues.map(x=>[x.id,x.date,x.name,x.branch,x.asset,x.status,x.priority,x.cost,x.technician,x.repairStart,x.repairEnd,x.resolutionTime,x.description,x.cause,x.action,x.timeline,x.notes,(x.activities||[]).map(a=>`${fdt(a.timestamp)} | ${a.type} | ${a.by||''} | ${a.text}`).join(' || ')].map(q).join(','));let blob=new Blob(['﻿'+h.join(',')+'
-'+rows.join('
-')],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='Maintenance_Report.csv';a.click();URL.revokeObjectURL(u)}function refresh(){renderIssues();let m=month(),a=db.issues.filter(x=>x.date?.startsWith(m));$('dOpen').textContent=db.issues.filter(x=>x.status==='Open').length;$('dProgress').textContent=db.issues.filter(x=>x.status==='In Progress').length;$('dClosed').textContent=a.filter(x=>x.status==='Closed').length;$('dTotal').textContent=db.issues.length;$('dCost').textContent=a.reduce((s,x)=>s+Number(x.cost||0),0).toLocaleString()+' EGP';$('dTime').textContent=mt(a.reduce((s,x)=>s+mins(x),0));$('todayLabel').textContent=new Date().toLocaleDateString('en-GB')}$('taskDate').value=todayISO();$('reportMonth').value=month();loadDB();
-</script></body></html>
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f3f4f6;
+    color:#1f2937
+}
+
+header{
+    background:#111827;
+    color:#fff;
+    padding:18px 28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center
+}
+
+header h1{margin:0;font-size:23px}
+
+.container{
+    max-width:1500px;
+    margin:auto;
+    padding:25px
+}
+
+nav{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:20px
+}
+
+button{
+    border:0;
+    padding:9px 14px;
+    border-radius:7px;
+    cursor:pointer;
+    background:#2563eb;
+    color:#fff;
+    font-weight:bold
+}
+
+button:hover{opacity:.9}
+button.secondary{background:#6b7280}
+button.success{background:#16a34a}
+button.danger{background:#dc2626}
+button.warning{background:#d97706}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:15px;
+    margin-bottom:20px
+}
+
+.card{
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06)
+}
+
+.card h3{
+    margin:0 0 10px;
+    color:#6b7280;
+    font-size:13px
+}
+
+.card strong{
+    font-size:25px
+}
+
+.section{
+    background:#fff;
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06)
+}
+
+.section h2{margin-top:0}
+
+.hidden{display:none}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+    gap:6px
+}
+
+.full{grid-column:1/-1}
+
+label{
+    font-size:13px;
+    font-weight:bold
+}
+
+input,select,textarea{
+    width:100%;
+    padding:10px;
+    border:1px solid #d1d5db;
+    border-radius:7px;
+    font-size:14px
+}
+
+textarea{
+    min-height:100px;
+    resize:vertical
+}
+
+.actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:18px
+}
+
+.filters{
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr 1fr;
+    gap:10px;
+    margin-bottom:15px
+}
+
+.table-wrap{
+    overflow-x:auto
+}
+
+table{
+    width:100%;
+    border-collapse:collapse
+}
+
+th,td{
+    padding:11px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:left;
+    font-size:13px;
+    vertical-align:top
+}
+
+th{background:#f9fafb}
+
+.status{
+    padding:5px 9px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:bold
+}
+
+.status.Open{
+    background:#fee2e2;
+    color:#991b1b
+}
+
+.status.InProgress{
+    background:#fef3c7;
+    color:#92400e
+}
+
+.status.Closed{
+    background:#dcfce7;
+    color:#166534
+}
+
+.priority{
+    padding:5px 9px;
+    border-radius:20px;
+    font-size:11px
+}
+
+.priority.High{
+    background:#fee2e2;
+    color:#991b1b
+}
+
+.priority.Medium{
+    background:#fef3c7;
+    color:#92400e
+}
+
+.priority.Low{
+    background:#dcfce7;
+    color:#166534
+}
+
+.week-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:15px
+}
+
+.week-grid{
+    display:grid;
+    grid-template-columns:repeat(7,minmax(180px,1fr));
+    gap:10px;
+    overflow-x:auto
+}
+
+.day-column{
+    min-height:350px;
+    background:#f9fafb;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    padding:10px
+}
+
+.day-column.today{
+    border:2px solid #2563eb;
+    background:#eff6ff
+}
+
+.day-title{
+    border-bottom:1px solid #ddd;
+    padding-bottom:9px;
+    margin-bottom:10px
+}
+
+.task-card{
+    background:#fff;
+    border:1px solid #ddd;
+    border-radius:8px;
+    padding:10px;
+    margin-bottom:9px
+}
+
+.task-card.done{
+    opacity:.65;
+    background:#ecfdf5
+}
+
+.task-card.cancelled{
+    opacity:.5;
+    background:#fef2f2
+}
+
+.badge{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:15px;
+    background:#eef2ff;
+    color:#3730a3;
+    font-size:11px;
+    margin:2px
+}
+
+.today-box{
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:18px
+}
+
+.history-item{
+    border-left:3px solid #2563eb;
+    background:#f9fafb;
+    padding:14px;
+    margin:10px 0;
+    border-radius:7px
+}
+
+.report-summary{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:12px;
+    margin:20px 0
+}
+
+.report-box{
+    background:#f9fafb;
+    padding:18px;
+    border-radius:10px
+}
+
+.report-box strong{
+    display:block;
+    font-size:23px;
+    margin-top:7px
+}
+
+.report-box.danger{
+    background:#fff1f2;
+    color:#991b1b
+}
+
+.report-box.warning{
+    background:#fffbeb;
+    color:#92400e
+}
+
+.report-box.success{
+    background:#f0fdf4;
+    color:#166534
+}
+
+.report-box.info{
+    background:#eff6ff;
+    color:#1d4ed8
+}
+
+.report-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    flex-wrap:wrap
+}
+
+.metric-table{
+    width:100%;
+    margin-top:15px
+}
+
+.metric-table td{
+    padding:12px;
+}
+
+.metric-table td:last-child{
+    text-align:right;
+    font-weight:bold
+}
+
+.summary-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px
+}
+
+.small-note{
+    color:#6b7280;
+    font-size:12px
+}
+
+.link-btn{
+    background:none;
+    color:#2563eb;
+    padding:0;
+    font-weight:bold
+}
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:9999
+}
+
+.modal.hidden{
+    display:none
+}
+
+.modal-box{
+    width:min(1000px,100%);
+    max-height:90vh;
+    overflow:auto;
+    background:#fff;
+    border-radius:12px;
+    padding:25px
+}
+
+.detail-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin:15px 0
+}
+
+.detail-box{
+    background:#f9fafb;
+    padding:12px;
+    border-radius:8px
+}
+
+.detail-box small{
+    display:block;
+    color:#6b7280;
+    margin-bottom:5px
+}
+
+.report-card{
+    background:#fff;
+    border-radius:12px;
+    padding:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+    margin-bottom:20px
+}
+
+@media(max-width:1200px){
+    .cards,.report-summary{
+        grid-template-columns:repeat(3,1fr)
+    }
+}
+
+@media(max-width:950px){
+    .cards,.report-summary{
+        grid-template-columns:repeat(2,1fr)
+    }
+
+    .form-grid,.filters,.summary-grid,.detail-grid{
+        grid-template-columns:1fr
+    }
+}
+
+@media(max-width:600px){
+    .cards,.report-summary{
+        grid-template-columns:1fr
+    }
+
+    .container{
+        padding:12px
+    }
+
+    header{
+        padding:15px
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Maintenance Management System</h1>
+    <span id="todayLabel"></span>
+</header>
+
+<div class="container">
+
+<!-- DASHBOARD -->
+
+<div class="cards">
+
+    <div class="card">
+        <h3>Open Issues</h3>
+        <strong id="dOpen">0</strong>
+    </div>
+
+    <div class="card">
+        <h3>In Progress</h3>
+        <strong id="dProgress">0</strong>
+    </div>
+
+    <div class="card">
+        <h3>Closed This Month</h3>
+        <strong id="dClosed">0</strong>
+    </div>
+
+    <div class="card">
+        <h3>Total Issues</h3>
+        <strong id="dTotal">0</strong>
+    </div>
+
+    <div class="card">
+        <h3>Monthly Cost</h3>
+        <strong id="dCost">0 EGP</strong>
+    </div>
+
+    <div class="card">
+        <h3>Monthly Repair Time</h3>
+        <strong id="dTime">0h</strong>
+    </div>
+
+</div>
+
+<!-- NAV -->
+
+<nav>
+
+<button onclick="showSection('maintenance')">
+Maintenance
+</button>
+
+<button onclick="showSection('planner')">
+Weekly Planner
+</button>
+
+<button onclick="showSection('reports')">
+Reports
+</button>
+
+</nav>
+
+
+<!-- MAINTENANCE -->
+
+<div id="maintenance" class="section">
+
+<h2>Maintenance Issues</h2>
+
+<div class="actions">
+
+<button onclick="newIssue()">
++ New Issue
+</button>
+
+<button class="success" onclick="exportIssues()">
+Export Excel / CSV
+</button>
+
+<button class="warning" onclick="openMonthlyReport()">
+Monthly Summary
+</button>
+
+</div>
+
+<br>
+
+<div class="filters">
+
+<input
+id="searchIssue"
+placeholder="Search issue, branch, asset..."
+oninput="renderIssues()">
+
+<select
+id="filterStatus"
+onchange="renderIssues()">
+
+<option value="">All Status</option>
+<option>Open</option>
+<option>In Progress</option>
+<option>Closed</option>
+
+</select>
+
+<select
+id="filterBranch"
+onchange="renderIssues()">
+
+<option value="">All Branches</option>
+
+</select>
+
+<select
+id="filterProblem"
+onchange="renderIssues()">
+
+<option value="">All Problems</option>
+
+</select>
+
+</div>
+
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+
+<tr>
+<th>ID</th>
+<th>Date</th>
+<th>Problem</th>
+<th>Branch</th>
+<th>Asset</th>
+<th>Status</th>
+<th>Priority</th>
+<th>Cost</th>
+<th>Repair Time</th>
+<th>Actions</th>
+</tr>
+
+</thead>
+
+<tbody id="issuesTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+<!-- ISSUE FORM -->
+
+<div id="issueForm" class="section hidden">
+
+<h2 id="formTitle">
+New Maintenance Issue
+</h2>
+
+<input type="hidden" id="editIssueId">
+
+<div class="form-grid">
+
+<div class="form-group">
+<label>Issue Number</label>
+<input id="issueId" readonly>
+</div>
+
+<div class="form-group">
+<label>Date</label>
+<input type="date" id="issueDate">
+</div>
+
+<div class="form-group">
+<label>Problem / Issue Name</label>
+<input id="issueName" placeholder="Example: AC Water Leak">
+</div>
+
+<div class="form-group">
+<label>Branch</label>
+<input id="issueBranch" placeholder="Example: Abu Rawash">
+</div>
+
+<div class="form-group">
+<label>Equipment</label>
+<input id="issueAsset" placeholder="Example: AC-01">
+</div>
+
+<div class="form-group">
+<label>Status</label>
+<select id="issueStatus">
+<option>Open</option>
+<option>In Progress</option>
+<option>Closed</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Priority</label>
+<select id="issuePriority">
+<option>High</option>
+<option>Medium</option>
+<option>Low</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Cost EGP</label>
+<input type="number" id="issueCost" value="0">
+</div>
+
+<div class="form-group">
+<label>Technician</label>
+<input id="issueTechnician">
+</div>
+
+<div class="form-group">
+<label>Repair Start</label>
+<input type="datetime-local" id="repairStart">
+</div>
+
+<div class="form-group">
+<label>Repair End</label>
+<input type="datetime-local" id="repairEnd">
+</div>
+
+<div class="form-group">
+<label>Resolution Time</label>
+<input id="resolutionTime" readonly>
+</div>
+
+<div class="form-group full">
+<label>Problem Description</label>
+<textarea id="issueDescription"></textarea>
+</div>
+
+<div class="form-group full">
+<label>Cause / Root Cause</label>
+<textarea id="issueCause"></textarea>
+</div>
+
+<div class="form-group full">
+<label>Solution / Action Taken</label>
+<textarea id="issueAction"></textarea>
+</div>
+
+<div class="form-group full">
+<label>Timeline</label>
+<textarea id="issueTimeline"
+placeholder="09:00 - Problem reported
+09:30 - Technician arrived
+10:30 - Repair completed"></textarea>
+</div>
+
+<div class="form-group full">
+<label>Notes</label>
+<textarea id="issueNotes"></textarea>
+</div>
+
+</div>
+
+<div class="actions">
+
+<button class="success" onclick="saveIssue()">
+Save Issue
+</button>
+
+<button class="secondary" onclick="closeIssueForm()">
+Cancel
+</button>
+
+</div>
+
+</div>
+
+
+<!-- WEEKLY PLANNER -->
+
+<div id="planner" class="section hidden">
+
+<div class="week-header">
+
+<div>
+
+<h2 style="margin-bottom:5px">
+Weekly Technician Planner
+</h2>
+
+<span id="weekRange"></span>
+
+</div>
+
+<div>
+
+<button class="secondary" onclick="changeWeek(-1)">
+◀ Previous
+</button>
+
+<button onclick="goCurrentWeek()">
+This Week
+</button>
+
+<button class="secondary" onclick="changeWeek(1)">
+Next ▶
+</button>
+
+</div>
+
+</div>
+
+
+<div class="today-box">
+
+<h3 style="margin-top:0">
+Today's Tasks
+</h3>
+
+<div id="todayTasks">
+No tasks for today.
+</div>
+
+</div>
+
+
+<div class="section" style="background:#f9fafb">
+
+<h3>
+Add Weekly Task
+</h3>
+
+<div class="form-grid">
+
+<div class="form-group">
+<label>Date</label>
+<input type="date" id="taskDate">
+</div>
+
+<div class="form-group">
+<label>Technician</label>
+<input id="taskTechnician" placeholder="Technician name">
+</div>
+
+<div class="form-group">
+<label>Task</label>
+<input id="taskName" placeholder="Example: AC Inspection">
+</div>
+
+<div class="form-group">
+<label>Branch</label>
+<input id="taskBranch" placeholder="Branch">
+</div>
+
+<div class="form-group">
+<label>Location / Equipment</label>
+<input id="taskAsset" placeholder="Equipment / Location">
+</div>
+
+<div class="form-group">
+<label>Priority</label>
+<select id="taskPriority">
+<option>High</option>
+<option selected>Medium</option>
+<option>Low</option>
+</select>
+</div>
+
+<div class="form-group full">
+<label>Notes</label>
+<textarea id="taskNotes"></textarea>
+</div>
+
+</div>
+
+<div class="actions">
+
+<button class="success" onclick="addTask()">
++ Add Task
+</button>
+
+</div>
+
+</div>
+
+
+<div class="week-grid" id="weekGrid"></div>
+
+
+<div style="margin-top:25px">
+
+<h3>
+Completed / Cancelled Tasks History
+</h3>
+
+<div id="taskHistory"></div>
+
+</div>
+
+</div>
+
+
+<!-- REPORTS -->
+
+<div id="reports" class="section hidden">
+
+<h2>
+Maintenance Reports
+</h2>
+
+<div class="form-grid">
+
+<div class="form-group">
+
+<label>Problem</label>
+
+<select id="reportProblem" onchange="renderProblemReport()">
+
+<option value="">
+Select Problem
+</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Branch</label>
+
+<select id="reportBranch" onchange="renderProblemReport()">
+
+<option value="">
+Select Branch
+</option>
+
+</select>
+
+</div>
+
+<div class="form-group">
+
+<label>Month</label>
+
+<input type="month" id="reportMonth" onchange="renderProblemReport()">
+
+</div>
+
+</div>
+
+<div id="problemReport" style="margin-top:25px">
+
+<div class="section" style="background:#f9fafb">
+Select Problem + Branch + Month.
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- DETAIL MODAL -->
+
+<div id="detailModal" class="modal hidden">
+
+<div class="modal-box">
+
+<div class="report-title">
+
+<h2 id="detailTitle">
+Maintenance Report
+</h2>
+
+<button class="danger" onclick="closeModal()">
+X
+</button>
+
+</div>
+
+<div id="detailContent"></div>
+
+</div>
+
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+
+/* =====================================================
+DATABASE
+===================================================== */
+
+/* =====================================================
+FIREBASE DATABASE
+===================================================== */
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBRhXbW3fk_a7-w2TZVAe4xAFkTMtjZla8",
+    authDomain: "maintenance-65ca8.firebaseapp.com",
+    databaseURL: "https://maintenance-65ca8-default-rtdb.firebaseio.com",
+    projectId: "maintenance-65ca8",
+    storageBucket: "maintenance-65ca8.firebasestorage.app",
+    messagingSenderId: "283957938686",
+    appId: "1:283957938686:web:abf50ab437a1fc18e9d8af",
+    measurementId: "G-MVWC3D0N0P"
+};
+
+
+/* Firebase */
+
+const firebaseApp =
+    firebase.initializeApp(firebaseConfig);
+
+const firebaseDB =
+    firebase.database();
+
+
+/* Local application database */
+
+let db = {
+    issues: [],
+    tasks: []
+};
+
+
+/* =====================================================
+LOAD DATABASE FROM FIREBASE
+===================================================== */
+
+async function loadDB(){
+
+    try{
+
+        const snapshot =
+            await firebaseDB.ref("maintenance").once("value");
+
+        const data =
+            snapshot.val();
+
+        if(data){
+
+            db = {
+
+                issues:
+                    Array.isArray(data.issues)
+                    ? data.issues
+                    : Object.values(data.issues || {}),
+
+                tasks:
+                    Array.isArray(data.tasks)
+                    ? data.tasks
+                    : Object.values(data.tasks || {})
+
+            };
+
+        }else{
+
+            db = {
+                issues:[],
+                tasks:[]
+            };
+
+        }
+
+
+        renderIssues();
+        renderPlanner();
+        refresh();
+
+
+    }catch(error){
+
+        console.error(
+            "Firebase Load Error:",
+            error
+        );
+
+        alert(
+            "Unable to load maintenance data from Firebase."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+SAVE DATABASE TO FIREBASE
+===================================================== */
+
+async function saveDB(){
+
+    try{
+
+        await firebaseDB
+            .ref("maintenance")
+            .set({
+
+                issues: db.issues,
+
+                tasks: db.tasks
+
+            });
+
+        console.log(
+            "Maintenance data saved to Firebase."
+        );
+
+    }catch(error){
+
+        console.error(
+            "Firebase Save Error:",
+            error
+        );
+
+        alert(
+            "Data could not be saved to Firebase."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+HELPERS
+===================================================== */
+
+function escapeHTML(value){
+
+    return String(value ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+
+}
+
+
+function todayISO(){
+
+    const d=new Date();
+
+    const local =
+        new Date(
+            d.getTime()
+            -
+            d.getTimezoneOffset()*60000
+        );
+
+    return local.toISOString().slice(0,10);
+
+}
+
+
+function formatDate(date){
+
+    if(!date) return "-";
+
+    return new Date(
+        date + "T00:00:00"
+    ).toLocaleDateString(
+        "en-GB"
+    );
+
+}
+
+
+function formatDateTime(value){
+
+    if(!value) return "-";
+
+    const d=new Date(value);
+
+    if(isNaN(d.getTime()))
+        return "-";
+
+    return d.toLocaleString("en-GB");
+
+}
+
+
+function durationToMinutes(value){
+
+    if(!value) return 0;
+
+    const match =
+        String(value).match(
+            /(\d+)\s*h\s*(\d+)\s*m/i
+        );
+
+    if(match){
+
+        return (
+            Number(match[1])*60
+            +
+            Number(match[2])
+        );
+
+    }
+
+    return 0;
+
+}
+
+
+function minutesToText(minutes){
+
+    minutes =
+        Math.max(
+            0,
+            Math.round(minutes || 0)
+        );
+
+    const hours =
+        Math.floor(minutes/60);
+
+    const mins =
+        minutes%60;
+
+    return `${hours}h ${mins}m`;
+
+}
+
+
+function getIssueMinutes(issue){
+
+    if(
+        issue.repairStart &&
+        issue.repairEnd
+    ){
+
+        const diff =
+            new Date(issue.repairEnd)
+            -
+            new Date(issue.repairStart);
+
+        if(diff>=0)
+            return Math.round(diff/60000);
+
+    }
+
+    return durationToMinutes(
+        issue.resolutionTime
+    );
+
+}
+
+
+function getMonth(){
+
+    return new Date()
+        .toISOString()
+        .slice(0,7);
+
+}
+
+
+/* =====================================================
+SECTION
+===================================================== */
+
+function showSection(section){
+
+    [
+        "maintenance",
+        "issueForm",
+        "planner",
+        "reports"
+    ].forEach(id=>{
+
+        const el=
+            document.getElementById(id);
+
+        if(el)
+            el.classList.add("hidden");
+
+    });
+
+
+    const target =
+        document.getElementById(section);
+
+    if(target)
+        target.classList.remove("hidden");
+
+
+    if(section==="maintenance")
+        renderIssues();
+
+    if(section==="planner")
+        renderPlanner();
+
+    if(section==="reports"){
+
+        prepareReportFilters();
+
+        renderProblemReport();
+
+    }
+
+}
+
+
+/* =====================================================
+ISSUE ID
+===================================================== */
+
+function generateIssueId(){
+
+    let max=0;
+
+    db.issues.forEach(x=>{
+
+        const n =
+            parseInt(
+                String(x.id)
+                .replace(/\D/g,"")
+            ) || 0;
+
+        if(n>max)
+            max=n;
+
+    });
+
+    return "MNT-" +
+        String(max+1)
+        .padStart(4,"0");
+
+}
+
+
+/* =====================================================
+NEW ISSUE
+===================================================== */
+
+function newIssue(){
+
+    showSection("issueForm");
+
+    document.getElementById(
+        "formTitle"
+    ).textContent =
+        "New Maintenance Issue";
+
+
+    document.getElementById(
+        "editIssueId"
+    ).value="";
+
+
+    document.getElementById(
+        "issueId"
+    ).value =
+        generateIssueId();
+
+
+    document.getElementById(
+        "issueDate"
+    ).value =
+        todayISO();
+
+
+    [
+        "issueName",
+        "issueBranch",
+        "issueAsset",
+        "issueTechnician",
+        "repairStart",
+        "repairEnd",
+        "issueDescription",
+        "issueCause",
+        "issueAction",
+        "issueTimeline",
+        "issueNotes"
+    ].forEach(id=>{
+
+        document.getElementById(id).value="";
+
+    });
+
+
+    document.getElementById(
+        "issueCost"
+    ).value=0;
+
+
+    document.getElementById(
+        "issueStatus"
+    ).value="Open";
+
+
+    document.getElementById(
+        "issuePriority"
+    ).value="Medium";
+
+
+    document.getElementById(
+        "resolutionTime"
+    ).value="";
+
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+}
+
+
+function closeIssueForm(){
+
+    document
+        .getElementById("issueForm")
+        .classList.add("hidden");
+
+    document
+        .getElementById("maintenance")
+        .classList.remove("hidden");
+
+}
+
+
+/* =====================================================
+RESOLUTION TIME
+===================================================== */
+
+function calculateResolutionTime(){
+
+    const start =
+        document.getElementById(
+            "repairStart"
+        ).value;
+
+    const end =
+        document.getElementById(
+            "repairEnd"
+        ).value;
+
+
+    if(!start || !end){
+
+        document.getElementById(
+            "resolutionTime"
+        ).value="";
+
+        return;
+
+    }
+
+
+    const diff =
+        new Date(end)
+        -
+        new Date(start);
+
+
+    if(diff<0){
+
+        document.getElementById(
+            "resolutionTime"
+        ).value="";
+
+        return;
+
+    }
+
+
+    document.getElementById(
+        "resolutionTime"
+    ).value =
+        minutesToText(
+            Math.round(diff/60000)
+        );
+
+}
+
+
+document
+.getElementById("repairStart")
+.addEventListener(
+    "change",
+    calculateResolutionTime
+);
+
+
+document
+.getElementById("repairEnd")
+.addEventListener(
+    "change",
+    calculateResolutionTime
+);
+
+
+/* =====================================================
+SAVE ISSUE
+===================================================== */
+
+function saveIssue(){
+
+    const id =
+        document.getElementById(
+            "issueId"
+        ).value;
+
+
+    const issue={
+
+        id,
+
+        date:
+            document.getElementById(
+                "issueDate"
+            ).value,
+
+        name:
+            document.getElementById(
+                "issueName"
+            ).value.trim(),
+
+        branch:
+            document.getElementById(
+                "issueBranch"
+            ).value.trim(),
+
+        asset:
+            document.getElementById(
+                "issueAsset"
+            ).value.trim(),
+
+        status:
+            document.getElementById(
+                "issueStatus"
+            ).value,
+
+        priority:
+            document.getElementById(
+                "issuePriority"
+            ).value,
+
+        cost:
+            Number(
+                document.getElementById(
+                    "issueCost"
+                ).value || 0
+            ),
+
+        technician:
+            document.getElementById(
+                "issueTechnician"
+            ).value.trim(),
+
+        repairStart:
+            document.getElementById(
+                "repairStart"
+            ).value,
+
+        repairEnd:
+            document.getElementById(
+                "repairEnd"
+            ).value,
+
+        resolutionTime:
+            document.getElementById(
+                "resolutionTime"
+            ).value,
+
+        description:
+            document.getElementById(
+                "issueDescription"
+            ).value,
+
+        cause:
+            document.getElementById(
+                "issueCause"
+            ).value,
+
+        action:
+            document.getElementById(
+                "issueAction"
+            ).value,
+
+        timeline:
+            document.getElementById(
+                "issueTimeline"
+            ).value,
+
+        notes:
+            document.getElementById(
+                "issueNotes"
+            ).value
+
+    };
+
+
+    if(!issue.name){
+
+        alert(
+            "Please enter the problem name."
+        );
+
+        return;
+
+    }
+
+
+    if(!issue.date){
+
+        alert(
+            "Please select the date."
+        );
+
+        return;
+
+    }
+
+
+    if(
+        issue.repairStart &&
+        issue.repairEnd
+    ){
+
+        const diff =
+            new Date(issue.repairEnd)
+            -
+            new Date(issue.repairStart);
+
+        if(diff<0){
+
+            alert(
+                "Repair End cannot be before Repair Start."
+            );
+
+            return;
+
+        }
+
+    }
+
+
+    const existing =
+        db.issues.find(
+            x=>x.id===id
+        );
+
+
+    if(existing){
+
+        Object.assign(
+            existing,
+            issue
+        );
+
+    }else{
+
+        db.issues.push(issue);
+
+    }
+
+
+    saveDB();
+
+    closeIssueForm();
+
+    refresh();
+
+    alert(
+        existing
+        ? "Issue updated successfully."
+        : "Issue added successfully."
+    );
+
+}
+
+
+/* =====================================================
+EDIT ISSUE
+===================================================== */
+
+function editIssue(id){
+
+    const x =
+        db.issues.find(
+            z=>z.id===id
+        );
+
+    if(!x) return;
+
+
+    showSection("issueForm");
+
+
+    document.getElementById(
+        "formTitle"
+    ).textContent =
+        "Edit Maintenance Issue";
+
+
+    document.getElementById(
+        "editIssueId"
+    ).value=id;
+
+
+    document.getElementById(
+        "issueId"
+    ).value=x.id;
+
+
+    document.getElementById(
+        "issueDate"
+    ).value=x.date || "";
+
+
+    document.getElementById(
+        "issueName"
+    ).value=x.name || "";
+
+
+    document.getElementById(
+        "issueBranch"
+    ).value=x.branch || "";
+
+
+    document.getElementById(
+        "issueAsset"
+    ).value=x.asset || "";
+
+
+    document.getElementById(
+        "issueStatus"
+    ).value=x.status || "Open";
+
+
+    document.getElementById(
+        "issuePriority"
+    ).value=x.priority || "Medium";
+
+
+    document.getElementById(
+        "issueCost"
+    ).value=x.cost || 0;
+
+
+    document.getElementById(
+        "issueTechnician"
+    ).value=x.technician || "";
+
+
+    document.getElementById(
+        "repairStart"
+    ).value=x.repairStart || "";
+
+
+    document.getElementById(
+        "repairEnd"
+    ).value=x.repairEnd || "";
+
+
+    document.getElementById(
+        "resolutionTime"
+    ).value=x.resolutionTime || "";
+
+
+    document.getElementById(
+        "issueDescription"
+    ).value=x.description || "";
+
+
+    document.getElementById(
+        "issueCause"
+    ).value=x.cause || "";
+
+
+    document.getElementById(
+        "issueAction"
+    ).value=x.action || "";
+
+
+    document.getElementById(
+        "issueTimeline"
+    ).value=x.timeline || "";
+
+
+    document.getElementById(
+        "issueNotes"
+    ).value=x.notes || "";
+
+
+    calculateResolutionTime();
+
+}
+
+
+/* =====================================================
+DELETE ISSUE
+===================================================== */
+
+function deleteIssue(id){
+
+    const issue =
+        db.issues.find(
+            x=>x.id===id
+        );
+
+    if(!issue) return;
+
+
+    if(!confirm(
+        `Delete ${issue.id} - ${issue.name}?`
+    ))
+        return;
+
+
+    db.issues =
+        db.issues.filter(
+            x=>x.id!==id
+        );
+
+
+    saveDB();
+
+    refresh();
+
+}
+
+
+/* =====================================================
+PROBLEM HISTORY
+===================================================== */
+
+function getProblemHistory(issue){
+
+    return db.issues.filter(x=>
+
+        String(x.name || "")
+        .trim()
+        .toLowerCase()
+        ===
+        String(issue.name || "")
+        .trim()
+        .toLowerCase()
+
+        &&
+
+        String(x.branch || "")
+        .trim()
+        .toLowerCase()
+        ===
+        String(issue.branch || "")
+        .trim()
+        .toLowerCase()
+
+    );
+
+}
+
+
+/* =====================================================
+VIEW ISSUE
+===================================================== */
+
+function viewIssue(id){
+
+    const issue =
+        db.issues.find(
+            x=>x.id===id
+        );
+
+    if(!issue) return;
+
+
+    const history =
+        getProblemHistory(issue)
+        .sort(
+            (a,b)=>
+            new Date(a.date || 0)
+            -
+            new Date(b.date || 0)
+        );
+
+
+    const totalCost =
+        history.reduce(
+            (sum,x)=>
+            sum+Number(x.cost || 0),
+            0
+        );
+
+
+    const totalMinutes =
+        history.reduce(
+            (sum,x)=>
+            sum+getIssueMinutes(x),
+            0
+        );
+
+
+    const averageMinutes =
+        history.length
+        ?
+        totalMinutes/history.length
+        :
+        0;
+
+
+    const html=`
+
+        <div class="detail-grid">
+
+            <div class="detail-box">
+                <small>Issue ID</small>
+                <b>${escapeHTML(issue.id)}</b>
+            </div>
+
+            <div class="detail-box">
+                <small>Branch</small>
+                <b>${escapeHTML(issue.branch || "-")}</b>
+            </div>
+
+            <div class="detail-box">
+                <small>Equipment</small>
+                <b>${escapeHTML(issue.asset || "-")}</b>
+            </div>
+
+            <div class="detail-box">
+                <small>Status</small>
+                <b>${escapeHTML(issue.status)}</b>
+            </div>
+
+            <div class="detail-box">
+                <small>Priority</small>
+                <b>${escapeHTML(issue.priority)}</b>
+            </div>
+
+            <div class="detail-box">
+                <small>Current Cost</small>
+                <b>${Number(issue.cost || 0).toLocaleString()} EGP</b>
+            </div>
+
+        </div>
+
+
+        <div class="report-summary">
+
+            <div class="report-box info">
+                Occurrences
+                <strong>${history.length}</strong>
+            </div>
+
+            <div class="report-box warning">
+                Total Cost
+                <strong>${totalCost.toLocaleString()} EGP</strong>
+            </div>
+
+            <div class="report-box success">
+                Total Repair Time
+                <strong>${minutesToText(totalMinutes)}</strong>
+            </div>
+
+            <div class="report-box">
+                Average Time
+                <strong>${minutesToText(averageMinutes)}</strong>
+            </div>
+
+        </div>
+
+
+        <div class="report-card">
+
+            <h3>Current Issue Details</h3>
+
+            <p>
+                <b>Date:</b>
+                ${formatDate(issue.date)}
+            </p>
+
+            <p>
+                <b>Technician:</b>
+                ${escapeHTML(issue.technician || "-")}
+            </p>
+
+            <p>
+                <b>Description:</b>
+                ${escapeHTML(issue.description || "-")}
+            </p>
+
+            <p>
+                <b>Root Cause:</b>
+                ${escapeHTML(issue.cause || "-")}
+            </p>
+
+            <p>
+                <b>Action Taken:</b>
+                ${escapeHTML(issue.action || "-")}
+            </p>
+
+            <p>
+                <b>Resolution Time:</b>
+                ${escapeHTML(issue.resolutionTime || "-")}
+            </p>
+
+            <p>
+                <b>Timeline:</b>
+            </p>
+
+            <pre style="
+                white-space:pre-wrap;
+                background:#f9fafb;
+                padding:15px;
+                border-radius:8px;
+            ">${escapeHTML(
+                issue.timeline || "-"
+            )}</pre>
+
+        </div>
+
+
+        <div class="report-card">
+
+            <h3>
+                Complete Problem History
+            </h3>
+
+            <p>
+                This problem occurred
+                <b>${history.length}</b>
+                time(s).
+            </p>
+
+            <div class="table-wrap">
+
+            <table>
+
+            <thead>
+
+            <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Technician</th>
+                <th>Cause</th>
+                <th>Solution</th>
+                <th>Cost</th>
+                <th>Repair Time</th>
+            </tr>
+
+            </thead>
+
+            <tbody>
+
+            ${
+                history.map((x,i)=>`
+
+                <tr>
+
+                    <td>${i+1}</td>
+
+                    <td>
+                        ${formatDate(x.date)}
+                    </td>
+
+                    <td>
+                        <span class="status ${
+                            x.status.replace(" ","")
+                        }">
+                            ${escapeHTML(x.status)}
+                        </span>
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            x.technician || "-"
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            x.cause || "-"
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            x.action || "-"
+                        )}
+                    </td>
+
+                    <td>
+                        ${Number(
+                            x.cost || 0
+                        ).toLocaleString()}
+                        EGP
+                    </td>
+
+                    <td>
+                        ${minutesToText(
+                            getIssueMinutes(x)
+                        )}
+                    </td>
+
+                </tr>
+
+                `).join("")
+            }
+
+            </tbody>
+
+            </table>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.getElementById(
+        "detailTitle"
+    ).textContent =
+        `${issue.name} - Problem Report`;
+
+
+    document.getElementById(
+        "detailContent"
+    ).innerHTML=html;
+
+
+    document.getElementById(
+        "detailModal"
+    ).classList.remove("hidden");
+
+}
+
+
+function closeModal(){
+
+    document.getElementById(
+        "detailModal"
+    ).classList.add("hidden");
+
+}
+
+
+/* =====================================================
+RENDER ISSUES
+===================================================== */
+
+function renderIssues(){
+
+    const search =
+        (
+            document.getElementById(
+                "searchIssue"
+            )?.value || ""
+        ).toLowerCase();
+
+
+    const status =
+        document.getElementById(
+            "filterStatus"
+        )?.value || "";
+
+
+    const branch =
+        document.getElementById(
+            "filterBranch"
+        )?.value || "";
+
+
+    const problem =
+        document.getElementById(
+            "filterProblem"
+        )?.value || "";
+
+
+    const issues =
+        db.issues
+        .filter(x=>{
+
+            const text =
+                `${x.id} ${x.name} ${x.branch} ${x.asset}`
+                .toLowerCase();
+
+
+            return(
+                text.includes(search)
+
+                &&
+
+                (!status ||
+                 x.status===status)
+
+                &&
+
+                (!branch ||
+                 x.branch===branch)
+
+                &&
+
+                (!problem ||
+                 x.name===problem)
+            );
+
+        })
+        .sort(
+            (a,b)=>
+            new Date(b.date || 0)
+            -
+            new Date(a.date || 0)
+        );
+
+
+    document.getElementById(
+        "issuesTable"
+    ).innerHTML =
+
+        issues.map(x=>`
+
+            <tr>
+
+                <td>
+                    <b>${escapeHTML(x.id)}</b>
+                </td>
+
+                <td>
+                    ${formatDate(x.date)}
+                </td>
+
+                <td>
+
+                    <button
+                    class="link-btn"
+                    onclick="
+                    viewIssue('${x.id}')
+                    ">
+
+                    ${escapeHTML(x.name)}
+
+                    </button>
+
+                </td>
+
+                <td>
+                    ${escapeHTML(
+                        x.branch || "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHTML(
+                        x.asset || "-"
+                    )}
+                </td>
+
+                <td>
+
+                    <span class="status ${
+                        x.status.replace(" ","")
+                    }">
+
+                        ${escapeHTML(x.status)}
+
+                    </span>
+
+                </td>
+
+                <td>
+
+                    <span class="priority ${
+                        x.priority
+                    }">
+
+                        ${escapeHTML(x.priority)}
+
+                    </span>
+
+                </td>
+
+                <td>
+
+                    ${Number(
+                        x.cost || 0
+                    ).toLocaleString()}
+                    EGP
+
+                </td>
+
+                <td>
+                    ${minutesToText(
+                        getIssueMinutes(x)
+                    )}
+                </td>
+
+                <td>
+
+                    <button
+                    onclick="
+                    viewIssue('${x.id}')
+                    ">
+                    View
+                    </button>
+
+                    <button
+                    onclick="
+                    editIssue('${x.id}')
+                    ">
+                    Edit
+                    </button>
+
+                    <button
+                    class="danger"
+                    onclick="
+                    deleteIssue('${x.id}')
+                    ">
+                    Delete
+                    </button>
+
+                </td>
+
+            </tr>
+
+        `).join("")
+
+        ||
+
+        `
+        <tr>
+        <td colspan="10">
+        No records found.
+        </td>
+        </tr>
+        `;
+
+
+    updateBranchFilter();
+
+    updateProblemFilter();
+
+}
+
+
+/* =====================================================
+FILTERS
+===================================================== */
+
+function updateBranchFilter(){
+
+    const select =
+        document.getElementById(
+            "filterBranch"
+        );
+
+
+    const current =
+        select.value;
+
+
+    const branches =
+        [
+            ...new Set(
+                db.issues
+                .map(x=>x.branch)
+                .filter(Boolean)
+            )
+        ]
+        .sort();
+
+
+    select.innerHTML =
+        `<option value="">
+        All Branches
+        </option>` +
+
+        branches.map(x=>
+            `<option value="${escapeHTML(x)}">
+            ${escapeHTML(x)}
+            </option>`
+        ).join("");
+
+
+    if(
+        branches.includes(current)
+    )
+        select.value=current;
+
+}
+
+
+function updateProblemFilter(){
+
+    const select =
+        document.getElementById(
+            "filterProblem"
+        );
+
+
+    const current =
+        select.value;
+
+
+    const problems =
+        [
+            ...new Set(
+                db.issues
+                .map(x=>x.name)
+                .filter(Boolean)
+            )
+        ]
+        .sort();
+
+
+    select.innerHTML =
+        `<option value="">
+        All Problems
+        </option>` +
+
+        problems.map(x=>
+            `<option value="${escapeHTML(x)}">
+            ${escapeHTML(x)}
+            </option>`
+        ).join("");
+
+
+    if(
+        problems.includes(current)
+    )
+        select.value=current;
+
+}
+
+
+/* =====================================================
+PLANNER
+===================================================== */
+
+let plannerDate =
+    new Date();
+
+
+function getWeekStart(date){
+
+    const d =
+        new Date(date);
+
+    const day =
+        d.getDay();
+
+    const diff =
+        day===6
+        ?0
+        :day+1;
+
+
+    d.setDate(
+        d.getDate()-diff
+    );
+
+    d.setHours(0,0,0,0);
+
+    return d;
+
+}
+
+
+function getWeekDays(){
+
+    const start =
+        getWeekStart(
+            plannerDate
+        );
+
+
+    const days=[];
+
+
+    for(let i=0;i<7;i++){
+
+        const d =
+            new Date(start);
+
+        d.setDate(
+            start.getDate()+i
+        );
+
+        days.push(d);
+
+    }
+
+
+    return days;
+
+}
+
+
+function changeWeek(amount){
+
+    plannerDate.setDate(
+        plannerDate.getDate()
+        +
+        amount*7
+    );
+
+    renderPlanner();
+
+}
+
+
+function goCurrentWeek(){
+
+    plannerDate =
+        new Date();
+
+    renderPlanner();
+
+}
+
+
+function renderPlanner(){
+
+    const days =
+        getWeekDays();
+
+
+    const start =
+        days[0];
+
+    const end =
+        days[6];
+
+
+    document.getElementById(
+        "weekRange"
+    ).textContent =
+        `${formatDate(
+            start.toISOString().slice(0,10)
+        )} - ${formatDate(
+            end.toISOString().slice(0,10)
+        )}`;
+
+
+    renderTodayTasks();
+
+
+    document.getElementById(
+        "weekGrid"
+    ).innerHTML =
+
+        days.map(day=>{
+
+            const date =
+                day.toISOString()
+                .slice(0,10);
+
+
+            const tasks =
+                db.tasks.filter(
+                    x=>x.date===date
+                );
+
+
+            const isToday =
+                date===todayISO();
+
+
+            const names=[
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday"
+            ];
+
+
+            return `
+
+            <div class="
+                day-column
+                ${isToday ? "today":""}
+            ">
+
+                <div class="day-title">
+
+                    <b>
+                        ${names[
+                            day.getDay()
+                        ]}
+                    </b>
+
+                    <br>
+
+                    <small>
+                        ${formatDate(date)}
+                    </small>
+
+                </div>
+
+
+                ${
+                    tasks.length
+                    ?
+                    tasks.map(
+                        taskCard
+                    ).join("")
+                    :
+                    `
+                    <div style="
+                        text-align:center;
+                        color:#999;
+                        padding-top:35px
+                    ">
+                        No tasks
+                    </div>
+                    `
+                }
+
+
+                <button
+                style="
+                width:100%;
+                margin-top:10px
+                "
+                onclick="
+                quickAddTask('${date}')
+                ">
+
+                + Add Task
+
+                </button>
+
+            </div>
+
+            `;
+
+        }).join("");
+
+
+    renderTaskHistory();
+
+}
+
+
+/* =====================================================
+TASK CARD
+===================================================== */
+
+function taskCard(task){
+
+    return `
+
+        <div class="
+            task-card
+            ${task.status==="Done"
+                ?"done":""}
+            ${task.status==="Cancelled"
+                ?"cancelled":""}
+        ">
+
+            <b>
+                ${escapeHTML(
+                    task.name
+                )}
+            </b>
+
+            <br>
+
+            <small>
+                Technician:
+                ${escapeHTML(
+                    task.technician || "-"
+                )}
+            </small>
+
+            <br>
+
+            <small>
+                Branch:
+                ${escapeHTML(
+                    task.branch || "-"
+                )}
+            </small>
+
+            <br>
+
+            <small>
+                Location:
+                ${escapeHTML(
+                    task.asset || "-"
+                )}
+            </small>
+
+            <br><br>
+
+            <span class="badge">
+                ${escapeHTML(task.priority)}
+            </span>
+
+            <span class="badge">
+                ${escapeHTML(task.status)}
+            </span>
+
+            <br><br>
+
+            ${
+                task.status==="Planned"
+                ?
+                `
+                <button
+                class="success"
+                onclick="
+                completeTask('${task.id}')
+                ">
+                ✓ Done
+                </button>
+
+                <button
+                class="danger"
+                onclick="
+                cancelTask('${task.id}')
+                ">
+                Cancel
+                </button>
+                `
+                :
+                `
+                <button
+                class="secondary"
+                onclick="
+                viewTask('${task.id}')
+                ">
+                View
+                </button>
+                `
+            }
+
+        </div>
+
+    `;
+
+}
+
+
+/* =====================================================
+ADD TASK
+===================================================== */
+
+function addTask(){
+
+    const date =
+        document.getElementById(
+            "taskDate"
+        ).value;
+
+
+    const technician =
+        document.getElementById(
+            "taskTechnician"
+        ).value.trim();
+
+
+    const name =
+        document.getElementById(
+            "taskName"
+        ).value.trim();
+
+
+    if(
+        !date ||
+        !technician ||
+        !name
+    ){
+
+        alert(
+            "Please enter Date, Technician and Task."
+        );
+
+        return;
+
+    }
+
+
+    const task={
+
+        id:
+            "TASK-" +
+            Date.now(),
+
+        date,
+
+        technician,
+
+        name,
+
+        branch:
+            document.getElementById(
+                "taskBranch"
+            ).value.trim(),
+
+        asset:
+            document.getElementById(
+                "taskAsset"
+            ).value.trim(),
+
+        priority:
+            document.getElementById(
+                "taskPriority"
+            ).value,
+
+        notes:
+            document.getElementById(
+                "taskNotes"
+            ).value,
+
+        status:"Planned",
+
+        createdAt:
+            new Date().toISOString(),
+
+        completedAt:"",
+
+        cancelledAt:""
+
+    };
+
+
+    db.tasks.push(task);
+
+    saveDB();
+
+
+    document.getElementById(
+        "taskName"
+    ).value="";
+
+    document.getElementById(
+        "taskNotes"
+    ).value="";
+
+
+    renderPlanner();
+
+}
+
+
+/* =====================================================
+QUICK ADD
+===================================================== */
+
+function quickAddTask(date){
+
+    document.getElementById(
+        "taskDate"
+    ).value=date;
+
+
+    document.getElementById(
+        "taskTechnician"
+    ).focus();
+
+}
+
+
+/* =====================================================
+COMPLETE TASK
+===================================================== */
+
+function completeTask(id){
+
+    const task =
+        db.tasks.find(
+            x=>x.id===id
+        );
+
+    if(!task) return;
+
+
+    if(!confirm(
+        "Mark this task as completed?"
+    ))
+        return;
+
+
+    task.status="Done";
+
+    task.completedAt =
+        new Date().toISOString();
+
+
+    saveDB();
+
+    renderPlanner();
+
+}
+
+
+/* =====================================================
+CANCEL TASK
+===================================================== */
+
+function cancelTask(id){
+
+    const task =
+        db.tasks.find(
+            x=>x.id===id
+        );
+
+    if(!task) return;
+
+
+    if(!confirm(
+        "Cancel this task?"
+    ))
+        return;
+
+
+    task.status="Cancelled";
+
+    task.cancelledAt =
+        new Date().toISOString();
+
+
+    saveDB();
+
+    renderPlanner();
+
+}
+
+
+/* =====================================================
+VIEW TASK
+===================================================== */
+
+function viewTask(id){
+
+    const task =
+        db.tasks.find(
+            x=>x.id===id
+        );
+
+    if(!task) return;
+
+
+    alert(
+`Task:
+${task.name}
+
+Date:
+${formatDate(task.date)}
+
+Technician:
+${task.technician}
+
+Branch:
+${task.branch || "-"}
+
+Location:
+${task.asset || "-"}
+
+Priority:
+${task.priority}
+
+Status:
+${task.status}
+
+Notes:
+${task.notes || "-"}`
+    );
+
+}
+
+
+/* =====================================================
+TODAY TASKS
+===================================================== */
+
+function renderTodayTasks(){
+
+    const today =
+        todayISO();
+
+
+    const tasks =
+        db.tasks.filter(
+            x=>x.date===today
+        );
+
+
+    const container =
+        document.getElementById(
+            "todayTasks"
+        );
+
+
+    if(!tasks.length){
+
+        container.innerHTML =
+            "No tasks for today.";
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        tasks.map(
+            taskCard
+        ).join("");
+
+}
+
+
+/* =====================================================
+TASK HISTORY
+===================================================== */
+
+function renderTaskHistory(){
+
+    const history =
+        db.tasks
+        .filter(
+            x=>
+            x.status==="Done"
+            ||
+            x.status==="Cancelled"
+        )
+        .sort(
+            (a,b)=>
+            new Date(
+                b.completedAt ||
+                b.cancelledAt ||
+                b.createdAt
+            )
+            -
+            new Date(
+                a.completedAt ||
+                a.cancelledAt ||
+                a.createdAt
+            )
+        );
+
+
+    const container =
+        document.getElementById(
+            "taskHistory"
+        );
+
+
+    if(!history.length){
+
+        container.innerHTML =
+            "No completed or cancelled tasks.";
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        history.slice(0,30)
+        .map(task=>`
+
+            <div class="history-item">
+
+                <b>
+                    ${escapeHTML(task.name)}
+                </b>
+
+                <br>
+
+                Date:
+                ${formatDate(task.date)}
+
+                <br>
+
+                Technician:
+                ${escapeHTML(task.technician)}
+
+                <br>
+
+                Status:
+                <b>${escapeHTML(task.status)}</b>
+
+            </div>
+
+        `).join("");
+
+}
+
+
+/* =====================================================
+REPORT FILTERS
+===================================================== */
+
+function prepareReportFilters(){
+
+    const problem =
+        document.getElementById(
+            "reportProblem"
+        );
+
+
+    const branch =
+        document.getElementById(
+            "reportBranch"
+        );
+
+
+    const currentProblem =
+        problem.value;
+
+
+    const currentBranch =
+        branch.value;
+
+
+    const problems =
+        [
+            ...new Set(
+                db.issues
+                .map(x=>x.name)
+                .filter(Boolean)
+            )
+        ]
+        .sort();
+
+
+    const branches =
+        [
+            ...new Set(
+                db.issues
+                .map(x=>x.branch)
+                .filter(Boolean)
+            )
+        ]
+        .sort();
+
+
+    problem.innerHTML =
+        `<option value="">
+        Select Problem
+        </option>` +
+
+        problems.map(x=>
+            `<option value="${escapeHTML(x)}">
+            ${escapeHTML(x)}
+            </option>`
+        ).join("");
+
+
+    branch.innerHTML =
+        `<option value="">
+        Select Branch
+        </option>` +
+
+        branches.map(x=>
+            `<option value="${escapeHTML(x)}">
+            ${escapeHTML(x)}
+            </option>`
+        ).join("");
+
+
+    if(
+        problems.includes(currentProblem)
+    )
+        problem.value=currentProblem;
+
+
+    if(
+        branches.includes(currentBranch)
+    )
+        branch.value=currentBranch;
+
+
+    const month =
+        document.getElementById(
+            "reportMonth"
+        );
+
+
+    if(!month.value)
+        month.value=getMonth();
+
+}
+
+
+/* =====================================================
+PROBLEM REPORT
+===================================================== */
+
+function renderProblemReport(){
+
+    const problem =
+        document.getElementById(
+            "reportProblem"
+        ).value;
+
+
+    const branch =
+        document.getElementById(
+            "reportBranch"
+        ).value;
+
+
+    const month =
+        document.getElementById(
+            "reportMonth"
+        ).value;
+
+
+    const container =
+        document.getElementById(
+            "problemReport"
+        );
+
+
+    if(
+        !problem ||
+        !branch ||
+        !month
+    ){
+
+        container.innerHTML=`
+
+            <div class="section"
+            style="background:#f9fafb">
+
+                Select Problem + Branch + Month
+                to generate the report.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    const records =
+        db.issues
+        .filter(x=>
+
+            String(x.name || "")
+            .trim()
+            .toLowerCase()
+            ===
+            problem.trim().toLowerCase()
+
+            &&
+
+            String(x.branch || "")
+            .trim()
+            .toLowerCase()
+            ===
+            branch.trim().toLowerCase()
+
+            &&
+
+            x.date &&
+            x.date.startsWith(month)
+
+        )
+        .sort(
+            (a,b)=>
+            new Date(a.date)
+            -
+            new Date(b.date)
+        );
+
+
+    const totalCost =
+        records.reduce(
+            (sum,x)=>
+            sum+Number(x.cost || 0),
+            0
+        );
+
+
+    const totalMinutes =
+        records.reduce(
+            (sum,x)=>
+            sum+getIssueMinutes(x),
+            0
+        );
+
+
+    const resolved =
+        records.filter(
+            x=>x.status==="Closed"
+        ).length;
+
+
+    const open =
+        records.filter(
+            x=>x.status!=="Closed"
+        ).length;
+
+
+    const averageMinutes =
+        records.length
+        ?
+        totalMinutes/records.length
+        :
+        0;
+
+
+    container.innerHTML=`
+
+        <div class="report-card">
+
+            <div class="report-title">
+
+                <div>
+
+                    <h2>
+                        ${escapeHTML(problem)}
+                    </h2>
+
+                    <p>
+                        <b>Branch:</b>
+                        ${escapeHTML(branch)}
+                        &nbsp; | &nbsp;
+                        <b>Month:</b>
+                        ${month}
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="report-summary">
+
+                <div class="report-box info">
+                    Occurrences
+                    <strong>
+                        ${records.length}
+                    </strong>
+                </div>
+
+                <div class="report-box success">
+                    Resolved
+                    <strong>
+                        ${resolved}
+                    </strong>
+                </div>
+
+                <div class="report-box warning">
+                    Pending
+                    <strong>
+                        ${open}
+                    </strong>
+                </div>
+
+                <div class="report-box danger">
+                    Monthly Cost
+                    <strong>
+                        ${totalCost.toLocaleString()}
+                        EGP
+                    </strong>
+                </div>
+
+                <div class="report-box info">
+                    Repair Time
+                    <strong>
+                        ${minutesToText(totalMinutes)}
+                    </strong>
+                </div>
+
+                <div class="report-box">
+                    Avg. Time
+                    <strong>
+                        ${minutesToText(averageMinutes)}
+                    </strong>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="report-card">
+
+            <h3>
+                Complete Problem History
+            </h3>
+
+            ${
+                records.length
+                ?
+
+                `
+                <div class="table-wrap">
+
+                <table>
+
+                <thead>
+
+                <tr>
+
+                    <th>#</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Technician</th>
+                    <th>Description</th>
+                    <th>Cause</th>
+                    <th>Solution</th>
+                    <th>Cost</th>
+                    <th>Repair Time</th>
+
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                ${
+                    records.map(
+                        (x,i)=>`
+
+                        <tr>
+
+                            <td>
+                                ${i+1}
+                            </td>
+
+                            <td>
+                                ${formatDate(x.date)}
+                            </td>
+
+                            <td>
+
+                                <span
+                                class="
+                                status
+                                ${x.status.replace(" ","")}
+                                ">
+
+                                ${escapeHTML(x.status)}
+
+                                </span>
+
+                            </td>
+
+                            <td>
+                                ${escapeHTML(
+                                    x.technician || "-"
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHTML(
+                                    x.description || "-"
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHTML(
+                                    x.cause || "-"
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHTML(
+                                    x.action || "-"
+                                )}
+                            </td>
+
+                            <td>
+                                ${Number(
+                                    x.cost || 0
+                                ).toLocaleString()}
+                                EGP
+                            </td>
+
+                            <td>
+                                ${minutesToText(
+                                    getIssueMinutes(x)
+                                )}
+                            </td>
+
+                        </tr>
+
+                        `
+                    ).join("")
+                }
+
+                </tbody>
+
+                </table>
+
+                </div>
+                `
+
+                :
+
+                `
+                <div style="
+                    padding:25px;
+                    text-align:center;
+                    color:#777
+                ">
+
+                    No records found
+                    for this problem,
+                    branch and month.
+
+                </div>
+                `
+            }
+
+        </div>
+
+
+        <div class="report-card">
+
+            <h3>
+                Monthly Maintenance Cost & Time
+            </h3>
+
+            <table class="metric-table">
+
+                <tr>
+                    <td>
+                        Number of occurrences
+                    </td>
+                    <td>
+                        ${records.length}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        Total maintenance cost
+                    </td>
+                    <td>
+                        ${totalCost.toLocaleString()}
+                        EGP
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        Total repair time
+                    </td>
+                    <td>
+                        ${minutesToText(totalMinutes)}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        Average repair time
+                    </td>
+                    <td>
+                        ${minutesToText(averageMinutes)}
+                    </td>
+                </tr>
+
+            </table>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =====================================================
+MONTHLY SUMMARY
+===================================================== */
+
+function openMonthlyReport(){
+
+    const month =
+        getMonth();
+
+
+    const records =
+        db.issues.filter(
+            x=>
+            x.date &&
+            x.date.startsWith(month)
+        );
+
+
+    const totalCost =
+        records.reduce(
+            (sum,x)=>
+            sum+Number(x.cost || 0),
+            0
+        );
+
+
+    const totalMinutes =
+        records.reduce(
+            (sum,x)=>
+            sum+getIssueMinutes(x),
+            0
+        );
+
+
+    const closed =
+        records.filter(
+            x=>x.status==="Closed"
+        ).length;
+
+
+    const problems={};
+
+
+    records.forEach(x=>{
+
+        const key =
+            `${x.name}|||${x.branch}`;
+
+        if(!problems[key]){
+
+            problems[key]={
+                name:x.name,
+                branch:x.branch,
+                count:0,
+                cost:0,
+                minutes:0
+            };
+
+        }
+
+
+        problems[key].count++;
+
+        problems[key].cost +=
+            Number(x.cost || 0);
+
+        problems[key].minutes +=
+            getIssueMinutes(x);
+
+    });
+
+
+    const problemList =
+        Object.values(problems)
+        .sort(
+            (a,b)=>
+            b.count-a.count
+        );
+
+
+    const costList =
+        Object.values(problems)
+        .sort(
+            (a,b)=>
+            b.cost-a.cost
+        );
+
+
+    const html=`
+
+        <div class="report-card">
+
+            <h2>
+                Monthly Maintenance Summary
+            </h2>
+
+            <p>
+                Month:
+                <b>${month}</b>
+            </p>
+
+            <div class="report-summary">
+
+                <div class="report-box info">
+                    Total Issues
+                    <strong>
+                        ${records.length}
+                    </strong>
+                </div>
+
+                <div class="report-box success">
+                    Closed
+                    <strong>
+                        ${closed}
+                    </strong>
+                </div>
+
+                <div class="report-box danger">
+                    Total Cost
+                    <strong>
+                        ${totalCost.toLocaleString()}
+                        EGP
+                    </strong>
+                </div>
+
+                <div class="report-box warning">
+                    Repair Time
+                    <strong>
+                        ${minutesToText(totalMinutes)}
+                    </strong>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="summary-grid">
+
+            <div class="report-card">
+
+                <h3>
+                    Most Repeated Problems
+                </h3>
+
+                ${
+                    problemList.length
+                    ?
+
+                    `<table>
+
+                    <thead>
+                    <tr>
+                        <th>Problem</th>
+                        <th>Branch</th>
+                        <th>Times</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+
+                    ${
+                        problemList
+                        .slice(0,10)
+                        .map(x=>`
+
+                        <tr>
+                            <td>
+                                ${escapeHTML(x.name)}
+                            </td>
+                            <td>
+                                ${escapeHTML(x.branch)}
+                            </td>
+                            <td>
+                                <b>${x.count}</b>
+                            </td>
+                        </tr>
+
+                        `).join("")
+                    }
+
+                    </tbody>
+
+                    </table>`
+
+                    :
+
+                    "No data for this month."
+                }
+
+            </div>
+
+
+            <div class="report-card">
+
+                <h3>
+                    Highest Maintenance Cost
+                </h3>
+
+                ${
+                    costList.length
+                    ?
+
+                    `<table>
+
+                    <thead>
+                    <tr>
+                        <th>Problem</th>
+                        <th>Branch</th>
+                        <th>Cost</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+
+                    ${
+                        costList
+                        .slice(0,10)
+                        .map(x=>`
+
+                        <tr>
+                            <td>
+                                ${escapeHTML(x.name)}
+                            </td>
+                            <td>
+                                ${escapeHTML(x.branch)}
+                            </td>
+                            <td>
+                                <b>
+                                    ${x.cost.toLocaleString()}
+                                    EGP
+                                </b>
+                            </td>
+                        </tr>
+
+                        `).join("")
+                    }
+
+                    </tbody>
+
+                    </table>`
+
+                    :
+
+                    "No data for this month."
+                }
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.getElementById(
+        "detailTitle"
+    ).textContent =
+        "Monthly Maintenance Summary";
+
+
+    document.getElementById(
+        "detailContent"
+    ).innerHTML=html;
+
+
+    document.getElementById(
+        "detailModal"
+    ).classList.remove("hidden");
+
+}
+
+
+/* =====================================================
+EXPORT
+===================================================== */
+
+function exportIssues(){
+
+    if(!db.issues.length){
+
+        alert(
+            "No maintenance records."
+        );
+
+        return;
+
+    }
+
+
+    const headers = [
+
+        "Issue ID",
+        "Date",
+        "Problem",
+        "Branch",
+        "Equipment",
+        "Status",
+        "Priority",
+        "Cost",
+        "Technician",
+        "Repair Start",
+        "Repair End",
+        "Resolution Time",
+        "Description",
+        "Cause",
+        "Solution",
+        "Timeline",
+        "Notes"
+
+    ];
+
+
+    const rows =
+        db.issues.map(x=>[
+
+            x.id,
+            x.date,
+            x.name,
+            x.branch,
+            x.asset,
+            x.status,
+            x.priority,
+            x.cost,
+            x.technician,
+            x.repairStart,
+            x.repairEnd,
+            x.resolutionTime,
+            x.description,
+            x.cause,
+            x.action,
+            x.timeline,
+            x.notes
+
+        ].map(v=>{
+
+            return `"${String(v ?? "")
+                .replace(/"/g,'""')
+                .replace(/\r?\n/g," ")
+            }`;
+
+        }).join(","));
+
+
+    const csv =
+        "\uFEFF" +
+        headers.join(",") +
+        "\r\n" +
+        rows.join("\r\n");
+
+
+    const blob =
+        new Blob(
+            [csv],
+            {
+                type:
+                "text/csv;charset=utf-8;"
+            }
+        );
+
+
+    const url =
+        URL.createObjectURL(blob);
+
+
+    const a =
+        document.createElement("a");
+
+
+    a.href=url;
+
+
+    a.download =
+        "Maintenance_Report.csv";
+
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+
+}
+
+
+/* =====================================================
+DASHBOARD
+===================================================== */
+
+function refresh(){
+
+    renderIssues();
+
+
+    const open =
+        db.issues.filter(
+            x=>x.status==="Open"
+        ).length;
+
+
+    const progress =
+        db.issues.filter(
+            x=>x.status==="In Progress"
+        ).length;
+
+
+    const month =
+        getMonth();
+
+
+    const monthRecords =
+        db.issues.filter(
+            x=>
+            x.date &&
+            x.date.startsWith(month)
+        );
+
+
+    const closed =
+        monthRecords.filter(
+            x=>x.status==="Closed"
+        ).length;
+
+
+    const cost =
+        monthRecords.reduce(
+            (sum,x)=>
+            sum+Number(x.cost || 0),
+            0
+        );
+
+
+    const minutes =
+        monthRecords.reduce(
+            (sum,x)=>
+            sum+getIssueMinutes(x),
+            0
+        );
+
+
+    document.getElementById(
+        "dOpen"
+    ).textContent=open;
+
+
+    document.getElementById(
+        "dProgress"
+    ).textContent=progress;
+
+
+    document.getElementById(
+        "dClosed"
+    ).textContent=closed;
+
+
+    document.getElementById(
+        "dTotal"
+    ).textContent=db.issues.length;
+
+
+    document.getElementById(
+        "dCost"
+    ).textContent =
+        cost.toLocaleString()
+        +
+        " EGP";
+
+
+    document.getElementById(
+        "dTime"
+    ).textContent =
+        minutesToText(minutes);
+
+
+    document.getElementById(
+        "todayLabel"
+    ).textContent =
+        new Date()
+        .toLocaleDateString(
+            "en-GB"
+        );
+
+}
+
+
+/* =====================================================
+INITIALIZE
+===================================================== */
+
+document.getElementById(
+    "taskDate"
+).value=todayISO();
+
+
+document.getElementById(
+    "reportMonth"
+).value=getMonth();
+
+
+loadDB();
+    
+</script>
+
+</body>
+</html>
+```
