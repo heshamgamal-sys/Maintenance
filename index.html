@@ -929,7 +929,9 @@ X
 </div>
 
 </div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
 
@@ -937,31 +939,134 @@ X
 DATABASE
 ===================================================== */
 
-let db =
-JSON.parse(
-localStorage.getItem("maintenanceDB")
-) || {
-    issues:[],
-    tasks:[]
+/* =====================================================
+FIREBASE DATABASE
+===================================================== */
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBRhXbW3fk_a7-w2TZVAe4xAFkTMtjZla8",
+    authDomain: "maintenance-65ca8.firebaseapp.com",
+    databaseURL: "https://maintenance-65ca8-default-rtdb.firebaseio.com",
+    projectId: "maintenance-65ca8",
+    storageBucket: "maintenance-65ca8.firebasestorage.app",
+    messagingSenderId: "283957938686",
+    appId: "1:283957938686:web:abf50ab437a1fc18e9d8af",
+    measurementId: "G-MVWC3D0N0P"
 };
 
-if(!Array.isArray(db.issues))
-    db.issues=[];
 
-if(!Array.isArray(db.tasks))
-    db.tasks=[];
+/* Firebase */
+
+const firebaseApp =
+    firebase.initializeApp(firebaseConfig);
+
+const firebaseDB =
+    firebase.database();
+
+
+/* Local application database */
+
+let db = {
+    issues: [],
+    tasks: []
+};
 
 
 /* =====================================================
-SAVE DATABASE
+LOAD DATABASE FROM FIREBASE
 ===================================================== */
 
-function saveDB(){
+async function loadDB(){
 
-    localStorage.setItem(
-        "maintenanceDB",
-        JSON.stringify(db)
-    );
+    try{
+
+        const snapshot =
+            await firebaseDB.ref("maintenance").once("value");
+
+        const data =
+            snapshot.val();
+
+        if(data){
+
+            db = {
+
+                issues:
+                    Array.isArray(data.issues)
+                    ? data.issues
+                    : Object.values(data.issues || {}),
+
+                tasks:
+                    Array.isArray(data.tasks)
+                    ? data.tasks
+                    : Object.values(data.tasks || {})
+
+            };
+
+        }else{
+
+            db = {
+                issues:[],
+                tasks:[]
+            };
+
+        }
+
+
+        renderIssues();
+        renderPlanner();
+        refresh();
+
+
+    }catch(error){
+
+        console.error(
+            "Firebase Load Error:",
+            error
+        );
+
+        alert(
+            "Unable to load maintenance data from Firebase."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+SAVE DATABASE TO FIREBASE
+===================================================== */
+
+async function saveDB(){
+
+    try{
+
+        await firebaseDB
+            .ref("maintenance")
+            .set({
+
+                issues: db.issues,
+
+                tasks: db.tasks
+
+            });
+
+        console.log(
+            "Maintenance data saved to Firebase."
+        );
+
+    }catch(error){
+
+        console.error(
+            "Firebase Save Error:",
+            error
+        );
+
+        alert(
+            "Data could not be saved to Firebase."
+        );
+
+    }
 
 }
 
@@ -3912,8 +4017,8 @@ document.getElementById(
 ).value=getMonth();
 
 
-refresh();
-
+loadDB();
+    
 </script>
 
 </body>
