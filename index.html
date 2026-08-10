@@ -28,7 +28,7 @@ header{
 header h1{margin:0;font-size:23px}
 
 .container{
-    max-width:1450px;
+    max-width:1500px;
     margin:auto;
     padding:25px
 }
@@ -58,7 +58,7 @@ button.warning{background:#d97706}
 
 .cards{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(6,1fr);
     gap:15px;
     margin-bottom:20px
 }
@@ -73,11 +73,11 @@ button.warning{background:#d97706}
 .card h3{
     margin:0 0 10px;
     color:#6b7280;
-    font-size:14px
+    font-size:13px
 }
 
 .card strong{
-    font-size:27px
+    font-size:25px
 }
 
 .section{
@@ -133,9 +133,13 @@ textarea{
 
 .filters{
     display:grid;
-    grid-template-columns:2fr 1fr 1fr;
+    grid-template-columns:2fr 1fr 1fr 1fr;
     gap:10px;
     margin-bottom:15px
+}
+
+.table-wrap{
+    overflow-x:auto
 }
 
 table{
@@ -147,7 +151,8 @@ th,td{
     padding:11px;
     border-bottom:1px solid #e5e7eb;
     text-align:left;
-    font-size:13px
+    font-size:13px;
+    vertical-align:top
 }
 
 th{background:#f9fafb}
@@ -276,7 +281,7 @@ th{background:#f9fafb}
 
 .report-summary{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(6,1fr);
     gap:12px;
     margin:20px 0
 }
@@ -293,12 +298,129 @@ th{background:#f9fafb}
     margin-top:7px
 }
 
+.report-box.danger{
+    background:#fff1f2;
+    color:#991b1b
+}
+
+.report-box.warning{
+    background:#fffbeb;
+    color:#92400e
+}
+
+.report-box.success{
+    background:#f0fdf4;
+    color:#166534
+}
+
+.report-box.info{
+    background:#eff6ff;
+    color:#1d4ed8
+}
+
+.report-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    flex-wrap:wrap
+}
+
+.metric-table{
+    width:100%;
+    margin-top:15px
+}
+
+.metric-table td{
+    padding:12px;
+}
+
+.metric-table td:last-child{
+    text-align:right;
+    font-weight:bold
+}
+
+.summary-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px
+}
+
+.small-note{
+    color:#6b7280;
+    font-size:12px
+}
+
+.link-btn{
+    background:none;
+    color:#2563eb;
+    padding:0;
+    font-weight:bold
+}
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:9999
+}
+
+.modal.hidden{
+    display:none
+}
+
+.modal-box{
+    width:min(1000px,100%);
+    max-height:90vh;
+    overflow:auto;
+    background:#fff;
+    border-radius:12px;
+    padding:25px
+}
+
+.detail-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin:15px 0
+}
+
+.detail-box{
+    background:#f9fafb;
+    padding:12px;
+    border-radius:8px
+}
+
+.detail-box small{
+    display:block;
+    color:#6b7280;
+    margin-bottom:5px
+}
+
+.report-card{
+    background:#fff;
+    border-radius:12px;
+    padding:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06);
+    margin-bottom:20px
+}
+
+@media(max-width:1200px){
+    .cards,.report-summary{
+        grid-template-columns:repeat(3,1fr)
+    }
+}
+
 @media(max-width:950px){
     .cards,.report-summary{
         grid-template-columns:repeat(2,1fr)
     }
 
-    .form-grid,.filters{
+    .form-grid,.filters,.summary-grid,.detail-grid{
         grid-template-columns:1fr
     }
 }
@@ -306,6 +428,14 @@ th{background:#f9fafb}
 @media(max-width:600px){
     .cards,.report-summary{
         grid-template-columns:1fr
+    }
+
+    .container{
+        padding:12px
+    }
+
+    header{
+        padding:15px
     }
 }
 </style>
@@ -340,12 +470,21 @@ th{background:#f9fafb}
     </div>
 
     <div class="card">
+        <h3>Total Issues</h3>
+        <strong id="dTotal">0</strong>
+    </div>
+
+    <div class="card">
         <h3>Monthly Cost</h3>
         <strong id="dCost">0 EGP</strong>
     </div>
 
-</div>
+    <div class="card">
+        <h3>Monthly Repair Time</h3>
+        <strong id="dTime">0h</strong>
+    </div>
 
+</div>
 
 <!-- NAV -->
 
@@ -366,9 +505,7 @@ Reports
 </nav>
 
 
-<!-- =====================================================
-MAINTENANCE
-===================================================== -->
+<!-- MAINTENANCE -->
 
 <div id="maintenance" class="section">
 
@@ -380,10 +517,12 @@ MAINTENANCE
 + New Issue
 </button>
 
-<button
-class="success"
-onclick="exportIssues()">
+<button class="success" onclick="exportIssues()">
 Export Excel / CSV
+</button>
+
+<button class="warning" onclick="openMonthlyReport()">
+Monthly Summary
 </button>
 
 </div>
@@ -416,8 +555,18 @@ onchange="renderIssues()">
 
 </select>
 
+<select
+id="filterProblem"
+onchange="renderIssues()">
+
+<option value="">All Problems</option>
+
+</select>
+
 </div>
 
+
+<div class="table-wrap">
 
 <table>
 
@@ -430,7 +579,9 @@ onchange="renderIssues()">
 <th>Branch</th>
 <th>Asset</th>
 <th>Status</th>
+<th>Priority</th>
 <th>Cost</th>
+<th>Repair Time</th>
 <th>Actions</th>
 </tr>
 
@@ -442,22 +593,18 @@ onchange="renderIssues()">
 
 </div>
 
+</div>
 
-<!-- =====================================================
-ISSUE FORM
-===================================================== -->
 
-<div
-id="issueForm"
-class="section hidden">
+<!-- ISSUE FORM -->
+
+<div id="issueForm" class="section hidden">
 
 <h2 id="formTitle">
 New Maintenance Issue
 </h2>
 
-<input
-type="hidden"
-id="editIssueId">
+<input type="hidden" id="editIssueId">
 
 <div class="form-grid">
 
@@ -473,23 +620,17 @@ id="editIssueId">
 
 <div class="form-group">
 <label>Problem / Issue Name</label>
-<input
-id="issueName"
-placeholder="Example: AC Water Leak">
+<input id="issueName" placeholder="Example: AC Water Leak">
 </div>
 
 <div class="form-group">
 <label>Branch</label>
-<input
-id="issueBranch"
-placeholder="Example: Abu Rawash">
+<input id="issueBranch" placeholder="Example: Abu Rawash">
 </div>
 
 <div class="form-group">
 <label>Equipment</label>
-<input
-id="issueAsset"
-placeholder="Example: AC-01">
+<input id="issueAsset" placeholder="Example: AC-01">
 </div>
 
 <div class="form-group">
@@ -512,10 +653,7 @@ placeholder="Example: AC-01">
 
 <div class="form-group">
 <label>Cost EGP</label>
-<input
-type="number"
-id="issueCost"
-value="0">
+<input type="number" id="issueCost" value="0">
 </div>
 
 <div class="form-group">
@@ -525,23 +663,17 @@ value="0">
 
 <div class="form-group">
 <label>Repair Start</label>
-<input
-type="datetime-local"
-id="repairStart">
+<input type="datetime-local" id="repairStart">
 </div>
 
 <div class="form-group">
 <label>Repair End</label>
-<input
-type="datetime-local"
-id="repairEnd">
+<input type="datetime-local" id="repairEnd">
 </div>
 
 <div class="form-group">
 <label>Resolution Time</label>
-<input
-id="resolutionTime"
-readonly>
+<input id="resolutionTime" readonly>
 </div>
 
 <div class="form-group full">
@@ -561,8 +693,7 @@ readonly>
 
 <div class="form-group full">
 <label>Timeline</label>
-<textarea
-id="issueTimeline"
+<textarea id="issueTimeline"
 placeholder="09:00 - Problem reported
 09:30 - Technician arrived
 10:30 - Repair completed"></textarea>
@@ -577,15 +708,11 @@ placeholder="09:00 - Problem reported
 
 <div class="actions">
 
-<button
-class="success"
-onclick="saveIssue()">
+<button class="success" onclick="saveIssue()">
 Save Issue
 </button>
 
-<button
-class="secondary"
-onclick="closeIssueForm()">
+<button class="secondary" onclick="closeIssueForm()">
 Cancel
 </button>
 
@@ -594,13 +721,9 @@ Cancel
 </div>
 
 
-<!-- =====================================================
-WEEKLY PLANNER
-===================================================== -->
+<!-- WEEKLY PLANNER -->
 
-<div
-id="planner"
-class="section hidden">
+<div id="planner" class="section hidden">
 
 <div class="week-header">
 
@@ -616,20 +739,15 @@ Weekly Technician Planner
 
 <div>
 
-<button
-class="secondary"
-onclick="changeWeek(-1)">
+<button class="secondary" onclick="changeWeek(-1)">
 ◀ Previous
 </button>
 
-<button
-onclick="goCurrentWeek()">
+<button onclick="goCurrentWeek()">
 This Week
 </button>
 
-<button
-class="secondary"
-onclick="changeWeek(1)">
+<button class="secondary" onclick="changeWeek(1)">
 Next ▶
 </button>
 
@@ -637,8 +755,6 @@ Next ▶
 
 </div>
 
-
-<!-- TODAY -->
 
 <div class="today-box">
 
@@ -653,10 +769,7 @@ No tasks for today.
 </div>
 
 
-<!-- ADD TASK -->
-
-<div class="section"
-style="background:#f9fafb">
+<div class="section" style="background:#f9fafb">
 
 <h3>
 Add Weekly Task
@@ -665,89 +778,49 @@ Add Weekly Task
 <div class="form-grid">
 
 <div class="form-group">
-
 <label>Date</label>
-
-<input
-type="date"
-id="taskDate">
-
+<input type="date" id="taskDate">
 </div>
 
-
 <div class="form-group">
-
 <label>Technician</label>
-
-<input
-id="taskTechnician"
-placeholder="Technician name">
-
+<input id="taskTechnician" placeholder="Technician name">
 </div>
 
-
 <div class="form-group">
-
 <label>Task</label>
-
-<input
-id="taskName"
-placeholder="Example: AC Inspection">
-
+<input id="taskName" placeholder="Example: AC Inspection">
 </div>
 
-
 <div class="form-group">
-
 <label>Branch</label>
-
-<input
-id="taskBranch"
-placeholder="Branch">
-
+<input id="taskBranch" placeholder="Branch">
 </div>
 
-
 <div class="form-group">
-
 <label>Location / Equipment</label>
-
-<input
-id="taskAsset"
-placeholder="Equipment / Location">
-
+<input id="taskAsset" placeholder="Equipment / Location">
 </div>
 
-
 <div class="form-group">
-
 <label>Priority</label>
-
 <select id="taskPriority">
 <option>High</option>
 <option selected>Medium</option>
 <option>Low</option>
 </select>
-
 </div>
 
-
 <div class="form-group full">
-
 <label>Notes</label>
-
-<textarea
-id="taskNotes"></textarea>
-
+<textarea id="taskNotes"></textarea>
 </div>
 
 </div>
 
 <div class="actions">
 
-<button
-class="success"
-onclick="addTask()">
+<button class="success" onclick="addTask()">
 + Add Task
 </button>
 
@@ -756,14 +829,8 @@ onclick="addTask()">
 </div>
 
 
-<!-- WEEK -->
+<div class="week-grid" id="weekGrid"></div>
 
-<div class="week-grid"
-id="weekGrid">
-</div>
-
-
-<!-- TASK HISTORY -->
 
 <div style="margin-top:25px">
 
@@ -778,22 +845,13 @@ Completed / Cancelled Tasks History
 </div>
 
 
-<!-- =====================================================
-REPORTS
-===================================================== -->
+<!-- REPORTS -->
 
-<div
-id="reports"
-class="section hidden">
+<div id="reports" class="section hidden">
 
 <h2>
-Maintenance Problem Report
+Maintenance Reports
 </h2>
-
-<p>
-Select the problem, branch and month to see the complete history.
-</p>
-
 
 <div class="form-grid">
 
@@ -801,9 +859,7 @@ Select the problem, branch and month to see the complete history.
 
 <label>Problem</label>
 
-<select
-id="reportProblem"
-onchange="renderProblemReport()">
+<select id="reportProblem" onchange="renderProblemReport()">
 
 <option value="">
 Select Problem
@@ -813,14 +869,11 @@ Select Problem
 
 </div>
 
-
 <div class="form-group">
 
 <label>Branch</label>
 
-<select
-id="reportBranch"
-onchange="renderProblemReport()">
+<select id="reportBranch" onchange="renderProblemReport()">
 
 <option value="">
 Select Branch
@@ -830,70 +883,53 @@ Select Branch
 
 </div>
 
-
 <div class="form-group">
 
 <label>Month</label>
 
-<input
-type="month"
-id="reportMonth"
-onchange="renderProblemReport()">
+<input type="month" id="reportMonth" onchange="renderProblemReport()">
 
 </div>
 
 </div>
 
+<div id="problemReport" style="margin-top:25px">
 
-<div id="problemReport"
-style="margin-top:25px">
-
-<div class="section"
-style="background:#f9fafb">
-
+<div class="section" style="background:#f9fafb">
 Select Problem + Branch + Month.
-
 </div>
 
 </div>
 
 </div>
 
+</div>
+
+
+<!-- DETAIL MODAL -->
+
+<div id="detailModal" class="modal hidden">
+
+<div class="modal-box">
+
+<div class="report-title">
+
+<h2 id="detailTitle">
+Maintenance Report
+</h2>
+
+<button class="danger" onclick="closeModal()">
+X
+</button>
 
 </div>
-<script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+<div id="detailContent"></div>
 
-import {
-getFirestore,
-doc,
-getDoc,
-setDoc
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+</div>
 
-const firebaseConfig = {
+</div>
 
- apiKey: "ضع المفتاح هنا",
- authDomain: "اسم المشروع.firebaseapp.com",
- projectId: "اسم المشروع"
-
-};
-
-const app =
-initializeApp(firebaseConfig);
-
-const firestore =
-getFirestore(app);
-
-window.firestore = firestore;
-window.doc = doc;
-window.getDoc = getDoc;
-window.setDoc = setDoc;
-
-</script>
 
 <script>
 
@@ -901,42 +937,33 @@ window.setDoc = setDoc;
 DATABASE
 ===================================================== */
 
-let db = {
-    issues: [],
-    tasks: []
+let db =
+JSON.parse(
+localStorage.getItem("maintenanceDB")
+) || {
+    issues:[],
+    tasks:[]
 };
 
-async function loadDB() {
+if(!Array.isArray(db.issues))
+    db.issues=[];
 
-    const snap =
-    await getDoc(
-        doc(
-            firestore,
-            "system",
-            "database"
-        )
+if(!Array.isArray(db.tasks))
+    db.tasks=[];
+
+
+/* =====================================================
+SAVE DATABASE
+===================================================== */
+
+function saveDB(){
+
+    localStorage.setItem(
+        "maintenanceDB",
+        JSON.stringify(db)
     );
 
-    if (snap.exists()) {
-        db = snap.data();
-    }
-
-    refresh();
 }
-
-async function saveDB() {
-
-    await setDoc(
-        doc(
-            firestore,
-            "system",
-            "database"
-        ),
-        db
-    );
-}
-
-loadDB();
 
 
 /* =====================================================
@@ -957,9 +984,16 @@ function escapeHTML(value){
 
 function todayISO(){
 
-    return new Date()
-        .toISOString()
-        .slice(0,10);
+    const d=new Date();
+
+    const local =
+        new Date(
+            d.getTime()
+            -
+            d.getTimezoneOffset()*60000
+        );
+
+    return local.toISOString().slice(0,10);
 
 }
 
@@ -977,6 +1011,96 @@ function formatDate(date){
 }
 
 
+function formatDateTime(value){
+
+    if(!value) return "-";
+
+    const d=new Date(value);
+
+    if(isNaN(d.getTime()))
+        return "-";
+
+    return d.toLocaleString("en-GB");
+
+}
+
+
+function durationToMinutes(value){
+
+    if(!value) return 0;
+
+    const match =
+        String(value).match(
+            /(\d+)\s*h\s*(\d+)\s*m/i
+        );
+
+    if(match){
+
+        return (
+            Number(match[1])*60
+            +
+            Number(match[2])
+        );
+
+    }
+
+    return 0;
+
+}
+
+
+function minutesToText(minutes){
+
+    minutes =
+        Math.max(
+            0,
+            Math.round(minutes || 0)
+        );
+
+    const hours =
+        Math.floor(minutes/60);
+
+    const mins =
+        minutes%60;
+
+    return `${hours}h ${mins}m`;
+
+}
+
+
+function getIssueMinutes(issue){
+
+    if(
+        issue.repairStart &&
+        issue.repairEnd
+    ){
+
+        const diff =
+            new Date(issue.repairEnd)
+            -
+            new Date(issue.repairStart);
+
+        if(diff>=0)
+            return Math.round(diff/60000);
+
+    }
+
+    return durationToMinutes(
+        issue.resolutionTime
+    );
+
+}
+
+
+function getMonth(){
+
+    return new Date()
+        .toISOString()
+        .slice(0,7);
+
+}
+
+
 /* =====================================================
 SECTION
 ===================================================== */
@@ -988,9 +1112,9 @@ function showSection(section){
         "issueForm",
         "planner",
         "reports"
-    ].forEach(id => {
+    ].forEach(id=>{
 
-        const el =
+        const el=
             document.getElementById(id);
 
         if(el)
@@ -999,9 +1123,11 @@ function showSection(section){
     });
 
 
-    document
-        .getElementById(section)
-        .classList.remove("hidden");
+    const target =
+        document.getElementById(section);
+
+    if(target)
+        target.classList.remove("hidden");
 
 
     if(section==="maintenance")
@@ -1042,7 +1168,6 @@ function generateIssueId(){
 
     });
 
-
     return "MNT-" +
         String(max+1)
         .padStart(4,"0");
@@ -1056,10 +1181,7 @@ NEW ISSUE
 
 function newIssue(){
 
-    document
-        .getElementById("issueForm")
-        .classList.remove("hidden");
-
+    showSection("issueForm");
 
     document.getElementById(
         "formTitle"
@@ -1137,6 +1259,10 @@ function closeIssueForm(){
         .getElementById("issueForm")
         .classList.add("hidden");
 
+    document
+        .getElementById("maintenance")
+        .classList.remove("hidden");
+
 }
 
 
@@ -1169,7 +1295,8 @@ function calculateResolutionTime(){
 
 
     const diff =
-        new Date(end) -
+        new Date(end)
+        -
         new Date(start);
 
 
@@ -1184,22 +1311,12 @@ function calculateResolutionTime(){
     }
 
 
-    const hours =
-        Math.floor(
-            diff / 3600000
-        );
-
-    const minutes =
-        Math.floor(
-            (diff % 3600000) /
-            60000
-        );
-
-
     document.getElementById(
         "resolutionTime"
     ).value =
-        `${hours}h ${minutes}m`;
+        minutesToText(
+            Math.round(diff/60000)
+        );
 
 }
 
@@ -1332,9 +1449,43 @@ function saveIssue(){
     }
 
 
+    if(!issue.date){
+
+        alert(
+            "Please select the date."
+        );
+
+        return;
+
+    }
+
+
+    if(
+        issue.repairStart &&
+        issue.repairEnd
+    ){
+
+        const diff =
+            new Date(issue.repairEnd)
+            -
+            new Date(issue.repairStart);
+
+        if(diff<0){
+
+            alert(
+                "Repair End cannot be before Repair Start."
+            );
+
+            return;
+
+        }
+
+    }
+
+
     const existing =
         db.issues.find(
-            x => x.id === id
+            x=>x.id===id
         );
 
 
@@ -1375,15 +1526,13 @@ function editIssue(id){
 
     const x =
         db.issues.find(
-            z => z.id === id
+            z=>z.id===id
         );
 
     if(!x) return;
 
 
-    document
-        .getElementById("issueForm")
-        .classList.remove("hidden");
+    showSection("issueForm");
 
 
     document.getElementById(
@@ -1495,7 +1644,7 @@ function deleteIssue(id){
 
     const issue =
         db.issues.find(
-            x => x.id === id
+            x=>x.id===id
         );
 
     if(!issue) return;
@@ -1509,13 +1658,44 @@ function deleteIssue(id){
 
     db.issues =
         db.issues.filter(
-            x => x.id !== id
+            x=>x.id!==id
         );
 
 
     saveDB();
 
     refresh();
+
+}
+
+
+/* =====================================================
+PROBLEM HISTORY
+===================================================== */
+
+function getProblemHistory(issue){
+
+    return db.issues.filter(x=>
+
+        String(x.name || "")
+        .trim()
+        .toLowerCase()
+        ===
+        String(issue.name || "")
+        .trim()
+        .toLowerCase()
+
+        &&
+
+        String(x.branch || "")
+        .trim()
+        .toLowerCase()
+        ===
+        String(issue.branch || "")
+        .trim()
+        .toLowerCase()
+
+    );
 
 }
 
@@ -1528,52 +1708,111 @@ function viewIssue(id){
 
     const issue =
         db.issues.find(
-            x => x.id === id
+            x=>x.id===id
         );
 
     if(!issue) return;
 
 
     const history =
-        db.issues.filter(
-            x =>
-            x.name
-            .trim()
-            .toLowerCase()
-            ===
-            issue.name
-            .trim()
-            .toLowerCase()
-            &&
-            x.branch
-            .trim()
-            .toLowerCase()
-            ===
-            issue.branch
-            .trim()
-            .toLowerCase()
+        getProblemHistory(issue)
+        .sort(
+            (a,b)=>
+            new Date(a.date || 0)
+            -
+            new Date(b.date || 0)
         );
 
 
     const totalCost =
         history.reduce(
             (sum,x)=>
-            sum + Number(x.cost || 0),
+            sum+Number(x.cost || 0),
             0
         );
 
 
+    const totalMinutes =
+        history.reduce(
+            (sum,x)=>
+            sum+getIssueMinutes(x),
+            0
+        );
+
+
+    const averageMinutes =
+        history.length
+        ?
+        totalMinutes/history.length
+        :
+        0;
+
+
     const html=`
 
-        <div class="section">
+        <div class="detail-grid">
 
-            <h2>
-                ${escapeHTML(issue.name)}
-            </h2>
+            <div class="detail-box">
+                <small>Issue ID</small>
+                <b>${escapeHTML(issue.id)}</b>
+            </div>
 
-            <p>
-                <b>Issue:</b> ${issue.id}
-            </p>
+            <div class="detail-box">
+                <small>Branch</small>
+                <b>${escapeHTML(issue.branch || "-")}</b>
+            </div>
+
+            <div class="detail-box">
+                <small>Equipment</small>
+                <b>${escapeHTML(issue.asset || "-")}</b>
+            </div>
+
+            <div class="detail-box">
+                <small>Status</small>
+                <b>${escapeHTML(issue.status)}</b>
+            </div>
+
+            <div class="detail-box">
+                <small>Priority</small>
+                <b>${escapeHTML(issue.priority)}</b>
+            </div>
+
+            <div class="detail-box">
+                <small>Current Cost</small>
+                <b>${Number(issue.cost || 0).toLocaleString()} EGP</b>
+            </div>
+
+        </div>
+
+
+        <div class="report-summary">
+
+            <div class="report-box info">
+                Occurrences
+                <strong>${history.length}</strong>
+            </div>
+
+            <div class="report-box warning">
+                Total Cost
+                <strong>${totalCost.toLocaleString()} EGP</strong>
+            </div>
+
+            <div class="report-box success">
+                Total Repair Time
+                <strong>${minutesToText(totalMinutes)}</strong>
+            </div>
+
+            <div class="report-box">
+                Average Time
+                <strong>${minutesToText(averageMinutes)}</strong>
+            </div>
+
+        </div>
+
+
+        <div class="report-card">
+
+            <h3>Current Issue Details</h3>
 
             <p>
                 <b>Date:</b>
@@ -1581,142 +1820,168 @@ function viewIssue(id){
             </p>
 
             <p>
-                <b>Branch:</b>
-                ${escapeHTML(issue.branch)}
+                <b>Technician:</b>
+                ${escapeHTML(issue.technician || "-")}
             </p>
 
             <p>
-                <b>Asset:</b>
-                ${escapeHTML(issue.asset || "-")}
+                <b>Description:</b>
+                ${escapeHTML(issue.description || "-")}
             </p>
 
             <p>
-                <b>Status:</b>
-                ${issue.status}
+                <b>Root Cause:</b>
+                ${escapeHTML(issue.cause || "-")}
             </p>
 
             <p>
-                <b>Cost:</b>
-                ${Number(issue.cost || 0).toLocaleString()}
-                EGP
+                <b>Action Taken:</b>
+                ${escapeHTML(issue.action || "-")}
             </p>
 
-            <hr>
+            <p>
+                <b>Resolution Time:</b>
+                ${escapeHTML(issue.resolutionTime || "-")}
+            </p>
 
-            <h3>
-                Timeline
-            </h3>
+            <p>
+                <b>Timeline:</b>
+            </p>
 
             <pre style="
                 white-space:pre-wrap;
-                font-family:Arial;
+                background:#f9fafb;
+                padding:15px;
+                border-radius:8px;
             ">${escapeHTML(
-                issue.timeline ||
-                "No timeline recorded."
+                issue.timeline || "-"
             )}</pre>
+
+        </div>
+
+
+        <div class="report-card">
 
             <h3>
                 Complete Problem History
             </h3>
 
             <p>
-                Occurrences:
+                This problem occurred
                 <b>${history.length}</b>
+                time(s).
             </p>
 
-            <p>
-                Total Cost:
-                <b>
-                    ${totalCost.toLocaleString()}
-                    EGP
-                </b>
-            </p>
+            <div class="table-wrap">
+
+            <table>
+
+            <thead>
+
+            <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Technician</th>
+                <th>Cause</th>
+                <th>Solution</th>
+                <th>Cost</th>
+                <th>Repair Time</th>
+            </tr>
+
+            </thead>
+
+            <tbody>
 
             ${
                 history.map((x,i)=>`
 
-                    <div class="history-item">
+                <tr>
 
-                        <b>
-                            ${i+1}.
-                            ${formatDate(x.date)}
-                        </b>
+                    <td>${i+1}</td>
 
-                        <br><br>
+                    <td>
+                        ${formatDate(x.date)}
+                    </td>
 
-                        <b>Description:</b>
+                    <td>
+                        <span class="status ${
+                            x.status.replace(" ","")
+                        }">
+                            ${escapeHTML(x.status)}
+                        </span>
+                    </td>
+
+                    <td>
                         ${escapeHTML(
-                            x.description || "-"
+                            x.technician || "-"
                         )}
+                    </td>
 
-                        <br><br>
-
-                        <b>Cause:</b>
+                    <td>
                         ${escapeHTML(
                             x.cause || "-"
                         )}
+                    </td>
 
-                        <br><br>
-
-                        <b>Solution:</b>
+                    <td>
                         ${escapeHTML(
                             x.action || "-"
                         )}
+                    </td>
 
-                        <br><br>
-
-                        <b>Cost:</b>
+                    <td>
                         ${Number(
                             x.cost || 0
                         ).toLocaleString()}
                         EGP
+                    </td>
 
-                    </div>
+                    <td>
+                        ${minutesToText(
+                            getIssueMinutes(x)
+                        )}
+                    </td>
+
+                </tr>
 
                 `).join("")
             }
+
+            </tbody>
+
+            </table>
+
+            </div>
 
         </div>
 
     `;
 
 
-    const win =
-        window.open(
-            "",
-            "_blank",
-            "width=900,height=700"
-        );
+    document.getElementById(
+        "detailTitle"
+    ).textContent =
+        `${issue.name} - Problem Report`;
 
 
-    win.document.write(`
-        <html>
-        <head>
-        <title>Maintenance Report</title>
-        <style>
-        body{
-            font-family:Arial;
-            padding:30px;
-            background:#f3f4f6
-        }
-        .section{
-            background:#fff;
-            padding:25px;
-            border-radius:10px
-        }
-        .history-item{
-            padding:15px;
-            border-left:3px solid #2563eb;
-            background:#f9fafb;
-            margin:10px 0
-        }
-        </style>
-        </head>
-        <body>
-        ${html}
-        </body>
-        </html>
-    `);
+    document.getElementById(
+        "detailContent"
+    ).innerHTML=html;
+
+
+    document.getElementById(
+        "detailModal"
+    ).classList.remove("hidden");
+
+}
+
+
+function closeModal(){
+
+    document.getElementById(
+        "detailModal"
+    ).classList.add("hidden");
 
 }
 
@@ -1747,6 +2012,12 @@ function renderIssues(){
         )?.value || "";
 
 
+    const problem =
+        document.getElementById(
+            "filterProblem"
+        )?.value || "";
+
+
     const issues =
         db.issues
         .filter(x=>{
@@ -1758,12 +2029,21 @@ function renderIssues(){
 
             return(
                 text.includes(search)
+
                 &&
+
                 (!status ||
                  x.status===status)
+
                 &&
+
                 (!branch ||
                  x.branch===branch)
+
+                &&
+
+                (!problem ||
+                 x.name===problem)
             );
 
         })
@@ -1784,7 +2064,7 @@ function renderIssues(){
             <tr>
 
                 <td>
-                    <b>${x.id}</b>
+                    <b>${escapeHTML(x.id)}</b>
                 </td>
 
                 <td>
@@ -1793,16 +2073,15 @@ function renderIssues(){
 
                 <td>
 
-                    <a
-                    href="#"
+                    <button
+                    class="link-btn"
                     onclick="
-                    viewIssue('${x.id}');
-                    return false;
+                    viewIssue('${x.id}')
                     ">
 
                     ${escapeHTML(x.name)}
 
-                    </a>
+                    </button>
 
                 </td>
 
@@ -1820,12 +2099,23 @@ function renderIssues(){
 
                 <td>
 
-                    <span
-                    class="status
-                    ${x.status
-                        .replace(" ","")}">
+                    <span class="status ${
+                        x.status.replace(" ","")
+                    }">
 
-                        ${x.status}
+                        ${escapeHTML(x.status)}
+
+                    </span>
+
+                </td>
+
+                <td>
+
+                    <span class="priority ${
+                        x.priority
+                    }">
+
+                        ${escapeHTML(x.priority)}
 
                     </span>
 
@@ -1841,6 +2131,19 @@ function renderIssues(){
                 </td>
 
                 <td>
+                    ${minutesToText(
+                        getIssueMinutes(x)
+                    )}
+                </td>
+
+                <td>
+
+                    <button
+                    onclick="
+                    viewIssue('${x.id}')
+                    ">
+                    View
+                    </button>
 
                     <button
                     onclick="
@@ -1867,7 +2170,7 @@ function renderIssues(){
 
         `
         <tr>
-        <td colspan="8">
+        <td colspan="10">
         No records found.
         </td>
         </tr>
@@ -1876,11 +2179,13 @@ function renderIssues(){
 
     updateBranchFilter();
 
+    updateProblemFilter();
+
 }
 
 
 /* =====================================================
-BRANCH FILTER
+FILTERS
 ===================================================== */
 
 function updateBranchFilter(){
@@ -1902,7 +2207,8 @@ function updateBranchFilter(){
                 .map(x=>x.branch)
                 .filter(Boolean)
             )
-        ];
+        ]
+        .sort();
 
 
     select.innerHTML =
@@ -1917,7 +2223,53 @@ function updateBranchFilter(){
         ).join("");
 
 
-    select.value=current;
+    if(
+        branches.includes(current)
+    )
+        select.value=current;
+
+}
+
+
+function updateProblemFilter(){
+
+    const select =
+        document.getElementById(
+            "filterProblem"
+        );
+
+
+    const current =
+        select.value;
+
+
+    const problems =
+        [
+            ...new Set(
+                db.issues
+                .map(x=>x.name)
+                .filter(Boolean)
+            )
+        ]
+        .sort();
+
+
+    select.innerHTML =
+        `<option value="">
+        All Problems
+        </option>` +
+
+        problems.map(x=>
+            `<option value="${escapeHTML(x)}">
+            ${escapeHTML(x)}
+            </option>`
+        ).join("");
+
+
+    if(
+        problems.includes(current)
+    )
+        select.value=current;
 
 }
 
@@ -1939,13 +2291,13 @@ function getWeekStart(date){
         d.getDay();
 
     const diff =
-        day === 6
-        ? 0
-        : day + 1;
+        day===6
+        ?0
+        :day+1;
 
 
     d.setDate(
-        d.getDate() - diff
+        d.getDate()-diff
     );
 
     d.setHours(0,0,0,0);
@@ -2047,12 +2399,12 @@ function renderPlanner(){
 
             const tasks =
                 db.tasks.filter(
-                    x => x.date === date
+                    x=>x.date===date
                 );
 
 
             const isToday =
-                date === todayISO();
+                date===todayISO();
 
 
             const names=[
@@ -2161,8 +2513,7 @@ function taskCard(task){
             <small>
                 Technician:
                 ${escapeHTML(
-                    task.technician ||
-                    "-"
+                    task.technician || "-"
                 )}
             </small>
 
@@ -2171,8 +2522,7 @@ function taskCard(task){
             <small>
                 Branch:
                 ${escapeHTML(
-                    task.branch ||
-                    "-"
+                    task.branch || "-"
                 )}
             </small>
 
@@ -2181,19 +2531,18 @@ function taskCard(task){
             <small>
                 Location:
                 ${escapeHTML(
-                    task.asset ||
-                    "-"
+                    task.asset || "-"
                 )}
             </small>
 
             <br><br>
 
             <span class="badge">
-                ${task.priority}
+                ${escapeHTML(task.priority)}
             </span>
 
             <span class="badge">
-                ${task.status}
+                ${escapeHTML(task.status)}
             </span>
 
             <br><br>
@@ -2261,9 +2610,11 @@ function addTask(){
         ).value.trim();
 
 
-    if(!date ||
-       !technician ||
-       !name){
+    if(
+        !date ||
+        !technician ||
+        !name
+    ){
 
         alert(
             "Please enter Date, Technician and Task."
@@ -2348,11 +2699,9 @@ function quickAddTask(date){
     ).value=date;
 
 
-    document
-        .getElementById(
-            "taskTechnician"
-        )
-        .focus();
+    document.getElementById(
+        "taskTechnician"
+    ).focus();
 
 }
 
@@ -2365,7 +2714,7 @@ function completeTask(id){
 
     const task =
         db.tasks.find(
-            x => x.id === id
+            x=>x.id===id
         );
 
     if(!task) return;
@@ -2398,7 +2747,7 @@ function cancelTask(id){
 
     const task =
         db.tasks.find(
-            x => x.id === id
+            x=>x.id===id
         );
 
     if(!task) return;
@@ -2438,7 +2787,7 @@ function viewTask(id){
 
 
     alert(
-        `Task:
+`Task:
 ${task.name}
 
 Date:
@@ -2515,7 +2864,7 @@ function renderTaskHistory(){
     const history =
         db.tasks
         .filter(
-            x =>
+            x=>
             x.status==="Done"
             ||
             x.status==="Cancelled"
@@ -2559,29 +2908,23 @@ function renderTaskHistory(){
             <div class="history-item">
 
                 <b>
-                    ${escapeHTML(
-                        task.name
-                    )}
+                    ${escapeHTML(task.name)}
                 </b>
 
                 <br>
 
                 Date:
-                ${formatDate(
-                    task.date
-                )}
+                ${formatDate(task.date)}
 
                 <br>
 
                 Technician:
-                ${escapeHTML(
-                    task.technician
-                )}
+                ${escapeHTML(task.technician)}
 
                 <br>
 
                 Status:
-                <b>${task.status}</b>
+                <b>${escapeHTML(task.status)}</b>
 
             </div>
 
@@ -2662,11 +3005,16 @@ function prepareReportFilters(){
         ).join("");
 
 
-    problem.value =
-        currentProblem;
+    if(
+        problems.includes(currentProblem)
+    )
+        problem.value=currentProblem;
 
-    branch.value =
-        currentBranch;
+
+    if(
+        branches.includes(currentBranch)
+    )
+        branch.value=currentBranch;
 
 
     const month =
@@ -2676,10 +3024,7 @@ function prepareReportFilters(){
 
 
     if(!month.value)
-        month.value =
-            new Date()
-            .toISOString()
-            .slice(0,7);
+        month.value=getMonth();
 
 }
 
@@ -2714,9 +3059,11 @@ function renderProblemReport(){
         );
 
 
-    if(!problem ||
-       !branch ||
-       !month){
+    if(
+        !problem ||
+        !branch ||
+        !month
+    ){
 
         container.innerHTML=`
 
@@ -2739,23 +3086,19 @@ function renderProblemReport(){
         db.issues
         .filter(x=>
 
-            x.name
+            String(x.name || "")
             .trim()
             .toLowerCase()
             ===
-            problem
-            .trim()
-            .toLowerCase()
+            problem.trim().toLowerCase()
 
             &&
 
-            x.branch
+            String(x.branch || "")
             .trim()
             .toLowerCase()
             ===
-            branch
-            .trim()
-            .toLowerCase()
+            branch.trim().toLowerCase()
 
             &&
 
@@ -2774,104 +3117,127 @@ function renderProblemReport(){
     const totalCost =
         records.reduce(
             (sum,x)=>
-            sum + Number(x.cost || 0),
+            sum+Number(x.cost || 0),
+            0
+        );
+
+
+    const totalMinutes =
+        records.reduce(
+            (sum,x)=>
+            sum+getIssueMinutes(x),
             0
         );
 
 
     const resolved =
         records.filter(
-            x =>
-            x.status==="Closed"
+            x=>x.status==="Closed"
         ).length;
 
 
     const open =
         records.filter(
-            x =>
-            x.status!=="Closed"
+            x=>x.status!=="Closed"
         ).length;
+
+
+    const averageMinutes =
+        records.length
+        ?
+        totalMinutes/records.length
+        :
+        0;
 
 
     container.innerHTML=`
 
-        <div>
+        <div class="report-card">
 
-            <h2>
-                ${escapeHTML(problem)}
-            </h2>
+            <div class="report-title">
 
-            <p>
-                <b>Branch:</b>
-                ${escapeHTML(branch)}
-            </p>
+                <div>
 
-            <p>
-                <b>Month:</b>
-                ${month}
-            </p>
+                    <h2>
+                        ${escapeHTML(problem)}
+                    </h2>
+
+                    <p>
+                        <b>Branch:</b>
+                        ${escapeHTML(branch)}
+                        &nbsp; | &nbsp;
+                        <b>Month:</b>
+                        ${month}
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="report-summary">
+
+                <div class="report-box info">
+                    Occurrences
+                    <strong>
+                        ${records.length}
+                    </strong>
+                </div>
+
+                <div class="report-box success">
+                    Resolved
+                    <strong>
+                        ${resolved}
+                    </strong>
+                </div>
+
+                <div class="report-box warning">
+                    Pending
+                    <strong>
+                        ${open}
+                    </strong>
+                </div>
+
+                <div class="report-box danger">
+                    Monthly Cost
+                    <strong>
+                        ${totalCost.toLocaleString()}
+                        EGP
+                    </strong>
+                </div>
+
+                <div class="report-box info">
+                    Repair Time
+                    <strong>
+                        ${minutesToText(totalMinutes)}
+                    </strong>
+                </div>
+
+                <div class="report-box">
+                    Avg. Time
+                    <strong>
+                        ${minutesToText(averageMinutes)}
+                    </strong>
+                </div>
+
+            </div>
 
         </div>
 
 
-        <div class="report-summary">
-
-            <div class="report-box">
-
-                Occurrences
-
-                <strong>
-                    ${records.length}
-                </strong>
-
-            </div>
-
-            <div class="report-box">
-
-                Resolved
-
-                <strong>
-                    ${resolved}
-                </strong>
-
-            </div>
-
-            <div class="report-box">
-
-                Pending
-
-                <strong>
-                    ${open}
-                </strong>
-
-            </div>
-
-            <div class="report-box">
-
-                Monthly Cost
-
-                <strong>
-                    ${totalCost.toLocaleString()}
-                    EGP
-                </strong>
-
-            </div>
-
-        </div>
-
-
-        <div class="section">
+        <div class="report-card">
 
             <h3>
                 Complete Problem History
             </h3>
-
 
             ${
                 records.length
                 ?
 
                 `
+                <div class="table-wrap">
+
                 <table>
 
                 <thead>
@@ -2881,10 +3247,12 @@ function renderProblemReport(){
                     <th>#</th>
                     <th>Date</th>
                     <th>Status</th>
+                    <th>Technician</th>
                     <th>Description</th>
                     <th>Cause</th>
                     <th>Solution</th>
                     <th>Cost</th>
+                    <th>Repair Time</th>
 
                 </tr>
 
@@ -2903,9 +3271,7 @@ function renderProblemReport(){
                             </td>
 
                             <td>
-                                ${formatDate(
-                                    x.date
-                                )}
+                                ${formatDate(x.date)}
                             </td>
 
                             <td>
@@ -2913,11 +3279,10 @@ function renderProblemReport(){
                                 <span
                                 class="
                                 status
-                                ${x.status
-                                    .replace(" ","")}
+                                ${x.status.replace(" ","")}
                                 ">
 
-                                ${x.status}
+                                ${escapeHTML(x.status)}
 
                                 </span>
 
@@ -2925,22 +3290,25 @@ function renderProblemReport(){
 
                             <td>
                                 ${escapeHTML(
-                                    x.description ||
-                                    "-"
+                                    x.technician || "-"
                                 )}
                             </td>
 
                             <td>
                                 ${escapeHTML(
-                                    x.cause ||
-                                    "-"
+                                    x.description || "-"
                                 )}
                             </td>
 
                             <td>
                                 ${escapeHTML(
-                                    x.action ||
-                                    "-"
+                                    x.cause || "-"
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHTML(
+                                    x.action || "-"
                                 )}
                             </td>
 
@@ -2949,6 +3317,12 @@ function renderProblemReport(){
                                     x.cost || 0
                                 ).toLocaleString()}
                                 EGP
+                            </td>
+
+                            <td>
+                                ${minutesToText(
+                                    getIssueMinutes(x)
+                                )}
                             </td>
 
                         </tr>
@@ -2960,6 +3334,8 @@ function renderProblemReport(){
                 </tbody>
 
                 </table>
+
+                </div>
                 `
 
                 :
@@ -2977,43 +3353,333 @@ function renderProblemReport(){
 
                 </div>
                 `
-
             }
 
         </div>
 
 
-        <div class="section"
-        style="
-        background:#111827;
-        color:#fff
-        ">
+        <div class="report-card">
 
             <h3>
-                Monthly Maintenance Cost
+                Monthly Maintenance Cost & Time
             </h3>
 
-            <div style="
-            font-size:30px;
-            font-weight:bold
-            ">
+            <table class="metric-table">
 
-                ${totalCost.toLocaleString()}
-                EGP
+                <tr>
+                    <td>
+                        Number of occurrences
+                    </td>
+                    <td>
+                        ${records.length}
+                    </td>
+                </tr>
 
-            </div>
+                <tr>
+                    <td>
+                        Total maintenance cost
+                    </td>
+                    <td>
+                        ${totalCost.toLocaleString()}
+                        EGP
+                    </td>
+                </tr>
 
-            <p>
-                ${records.length}
-                occurrence(s)
-                for this problem at
-                ${escapeHTML(branch)}
-                during ${month}.
-            </p>
+                <tr>
+                    <td>
+                        Total repair time
+                    </td>
+                    <td>
+                        ${minutesToText(totalMinutes)}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        Average repair time
+                    </td>
+                    <td>
+                        ${minutesToText(averageMinutes)}
+                    </td>
+                </tr>
+
+            </table>
 
         </div>
 
     `;
+
+}
+
+
+/* =====================================================
+MONTHLY SUMMARY
+===================================================== */
+
+function openMonthlyReport(){
+
+    const month =
+        getMonth();
+
+
+    const records =
+        db.issues.filter(
+            x=>
+            x.date &&
+            x.date.startsWith(month)
+        );
+
+
+    const totalCost =
+        records.reduce(
+            (sum,x)=>
+            sum+Number(x.cost || 0),
+            0
+        );
+
+
+    const totalMinutes =
+        records.reduce(
+            (sum,x)=>
+            sum+getIssueMinutes(x),
+            0
+        );
+
+
+    const closed =
+        records.filter(
+            x=>x.status==="Closed"
+        ).length;
+
+
+    const problems={};
+
+
+    records.forEach(x=>{
+
+        const key =
+            `${x.name}|||${x.branch}`;
+
+        if(!problems[key]){
+
+            problems[key]={
+                name:x.name,
+                branch:x.branch,
+                count:0,
+                cost:0,
+                minutes:0
+            };
+
+        }
+
+
+        problems[key].count++;
+
+        problems[key].cost +=
+            Number(x.cost || 0);
+
+        problems[key].minutes +=
+            getIssueMinutes(x);
+
+    });
+
+
+    const problemList =
+        Object.values(problems)
+        .sort(
+            (a,b)=>
+            b.count-a.count
+        );
+
+
+    const costList =
+        Object.values(problems)
+        .sort(
+            (a,b)=>
+            b.cost-a.cost
+        );
+
+
+    const html=`
+
+        <div class="report-card">
+
+            <h2>
+                Monthly Maintenance Summary
+            </h2>
+
+            <p>
+                Month:
+                <b>${month}</b>
+            </p>
+
+            <div class="report-summary">
+
+                <div class="report-box info">
+                    Total Issues
+                    <strong>
+                        ${records.length}
+                    </strong>
+                </div>
+
+                <div class="report-box success">
+                    Closed
+                    <strong>
+                        ${closed}
+                    </strong>
+                </div>
+
+                <div class="report-box danger">
+                    Total Cost
+                    <strong>
+                        ${totalCost.toLocaleString()}
+                        EGP
+                    </strong>
+                </div>
+
+                <div class="report-box warning">
+                    Repair Time
+                    <strong>
+                        ${minutesToText(totalMinutes)}
+                    </strong>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="summary-grid">
+
+            <div class="report-card">
+
+                <h3>
+                    Most Repeated Problems
+                </h3>
+
+                ${
+                    problemList.length
+                    ?
+
+                    `<table>
+
+                    <thead>
+                    <tr>
+                        <th>Problem</th>
+                        <th>Branch</th>
+                        <th>Times</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+
+                    ${
+                        problemList
+                        .slice(0,10)
+                        .map(x=>`
+
+                        <tr>
+                            <td>
+                                ${escapeHTML(x.name)}
+                            </td>
+                            <td>
+                                ${escapeHTML(x.branch)}
+                            </td>
+                            <td>
+                                <b>${x.count}</b>
+                            </td>
+                        </tr>
+
+                        `).join("")
+                    }
+
+                    </tbody>
+
+                    </table>`
+
+                    :
+
+                    "No data for this month."
+                }
+
+            </div>
+
+
+            <div class="report-card">
+
+                <h3>
+                    Highest Maintenance Cost
+                </h3>
+
+                ${
+                    costList.length
+                    ?
+
+                    `<table>
+
+                    <thead>
+                    <tr>
+                        <th>Problem</th>
+                        <th>Branch</th>
+                        <th>Cost</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+
+                    ${
+                        costList
+                        .slice(0,10)
+                        .map(x=>`
+
+                        <tr>
+                            <td>
+                                ${escapeHTML(x.name)}
+                            </td>
+                            <td>
+                                ${escapeHTML(x.branch)}
+                            </td>
+                            <td>
+                                <b>
+                                    ${x.cost.toLocaleString()}
+                                    EGP
+                                </b>
+                            </td>
+                        </tr>
+
+                        `).join("")
+                    }
+
+                    </tbody>
+
+                    </table>`
+
+                    :
+
+                    "No data for this month."
+                }
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.getElementById(
+        "detailTitle"
+    ).textContent =
+        "Monthly Maintenance Summary";
+
+
+    document.getElementById(
+        "detailContent"
+    ).innerHTML=html;
+
+
+    document.getElementById(
+        "detailModal"
+    ).classList.remove("hidden");
 
 }
 
@@ -3026,12 +3692,17 @@ function exportIssues(){
 
     if(!db.issues.length){
 
-        alert("No maintenance records.");
+        alert(
+            "No maintenance records."
+        );
+
         return;
 
     }
 
+
     const headers = [
+
         "Issue ID",
         "Date",
         "Problem",
@@ -3041,46 +3712,48 @@ function exportIssues(){
         "Priority",
         "Cost",
         "Technician",
+        "Repair Start",
+        "Repair End",
+        "Resolution Time",
         "Description",
         "Cause",
         "Solution",
         "Timeline",
-        "Resolution Time",
         "Notes"
+
     ];
 
-    const rows = db.issues.map(x => [
 
-        x.id,
-        x.date,
-        x.name,
-        x.branch,
-        x.asset,
-        x.status,
-        x.priority,
-        x.cost,
-        x.technician,
-        x.description,
-        x.cause,
-        x.action,
-        x.timeline,
-        x.resolutionTime,
-        x.notes
+    const rows =
+        db.issues.map(x=>[
 
-    ].map(v => {
+            x.id,
+            x.date,
+            x.name,
+            x.branch,
+            x.asset,
+            x.status,
+            x.priority,
+            x.cost,
+            x.technician,
+            x.repairStart,
+            x.repairEnd,
+            x.resolutionTime,
+            x.description,
+            x.cause,
+            x.action,
+            x.timeline,
+            x.notes
 
-        return `"${String(v ?? "")
-            .replace(/"/g,'""')
-            .replace(/\r?\n/g," ")
-        }`;
+        ].map(v=>{
 
-    }).join(","));
+            return `"${String(v ?? "")
+                .replace(/"/g,'""')
+                .replace(/\r?\n/g," ")
+            }`;
 
-    /*
-       UTF-8 BOM
-       This tells Microsoft Excel to read
-       Arabic correctly.
-    */
+        }).join(","));
+
 
     const csv =
         "\uFEFF" +
@@ -3088,23 +3761,31 @@ function exportIssues(){
         "\r\n" +
         rows.join("\r\n");
 
-    const blob = new Blob(
-        [csv],
-        {
-            type: "text/csv;charset=utf-8;"
-        }
-    );
+
+    const blob =
+        new Blob(
+            [csv],
+            {
+                type:
+                "text/csv;charset=utf-8;"
+            }
+        );
+
 
     const url =
         URL.createObjectURL(blob);
 
+
     const a =
         document.createElement("a");
 
-    a.href = url;
+
+    a.href=url;
+
 
     a.download =
         "Maintenance_Report.csv";
+
 
     document.body.appendChild(a);
 
@@ -3139,31 +3820,35 @@ function refresh(){
 
 
     const month =
-        new Date()
-        .toISOString()
-        .slice(0,7);
+        getMonth();
+
+
+    const monthRecords =
+        db.issues.filter(
+            x=>
+            x.date &&
+            x.date.startsWith(month)
+        );
 
 
     const closed =
-        db.issues.filter(
-            x=>
-            x.status==="Closed"
-            &&
-            x.date &&
-            x.date.startsWith(month)
+        monthRecords.filter(
+            x=>x.status==="Closed"
         ).length;
 
 
     const cost =
-        db.issues
-        .filter(
-            x=>
-            x.date &&
-            x.date.startsWith(month)
-        )
-        .reduce(
+        monthRecords.reduce(
             (sum,x)=>
-            sum + Number(x.cost || 0),
+            sum+Number(x.cost || 0),
+            0
+        );
+
+
+    const minutes =
+        monthRecords.reduce(
+            (sum,x)=>
+            sum+getIssueMinutes(x),
             0
         );
 
@@ -3184,16 +3869,27 @@ function refresh(){
 
 
     document.getElementById(
+        "dTotal"
+    ).textContent=db.issues.length;
+
+
+    document.getElementById(
         "dCost"
-    ).textContent=
+    ).textContent =
         cost.toLocaleString()
         +
         " EGP";
 
 
     document.getElementById(
+        "dTime"
+    ).textContent =
+        minutesToText(minutes);
+
+
+    document.getElementById(
         "todayLabel"
-    ).textContent=
+    ).textContent =
         new Date()
         .toLocaleDateString(
             "en-GB"
@@ -3213,10 +3909,7 @@ document.getElementById(
 
 document.getElementById(
     "reportMonth"
-).value=
-    new Date()
-    .toISOString()
-    .slice(0,7);
+).value=getMonth();
 
 
 refresh();
